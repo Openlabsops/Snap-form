@@ -3,9 +3,3 @@ export type ApiResponse<T> = {
   success: boolean;
   message?: string;
 };
-
-export type User = {
-  id: string;
-  email: string;
-  createdAt: string;
-};
