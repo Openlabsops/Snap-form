@@ -7,5 +7,5 @@ export type ApiResponse<T> = {
 export type User = {
   id: string;
   email: string;
-  createdAt: Date;
+  createdAt: string;
 };
