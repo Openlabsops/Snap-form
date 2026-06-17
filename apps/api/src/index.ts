@@ -1,23 +1,35 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
+import cors from "cors";
+import healthRouter from "./routes/health";
 
 const app = express();
 
-app.get("/", (_, res) => {
-  res.send("API running");
+
+app.use(cors());
+app.use(express.json());
+
+
+app.use("/", healthRouter);
+
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Internal Server Error" });
 });
 
-const server = app.listen(3001, () => {
-  console.log("Express API running on port 3001");
+
+const server = app.listen(3000, () => {
+  console.log("Express API running on port 3000");
 });
 
 server.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code === "EADDRINUSE") {
-    console.error("Port 3001 is already in use");
+    console.error("Port 3000 is already in use");
   } else {
     console.error("Server error:", err);
   }
   process.exit(1);
 });
+
 
 const shutdown = () => {
   console.log("Shutting down API server...");
