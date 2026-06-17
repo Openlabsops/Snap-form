@@ -7,11 +7,14 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@repo/types": "workspace:*",
+    "cors": "^2.8.6",
     "express": "^4.19.2"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.24",
     "typescript": "5.9.2"
