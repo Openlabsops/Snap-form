@@ -1,100 +1,42 @@
+```text
+   _____                   ______               
+  / ___/____  ____ _____  / ____/___  _________ ___ 
+  \__ \/ __ \/ __ `/ __ \/ /_  / __ \/ ___/ __ `__ \
+ ___/ / / / / /_/ / /_/ / __/ / /_/ / /  / / / / / /
+/____/_/ /_/\__,_/ .___/_/    \____/_/  /_/ /_/ /_/ 
+                /_/                                 
+```
+
 # Snap-form
 
-A Turborepo monorepo with Bun workspaces powering the Snap-form platform.
+**The open-source, AI-powered form builder that feels like Cal.com, Dub.co, and Mail0.**
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## The Vision
 
-### Apps and Packages
+Snap-form is designed to revolutionize how we build and share forms. Inspired by the best open-source tools of our time, it aims to be the standard for modern form creation. 
 
-**1. `web` (Frontend)**
-- **Idea:** The main user-facing Next.js application for Snap-form.
-- **Technologies:** Next.js 16, React 19, TypeScript, Tailwind CSS v4.
+Here is what makes Snap-form special, along with how we plan to build it:
 
-**2. `api` (Backend)**
-- **Idea:** The core backend server that handles requests from the web app.
-- **Technologies:** Express.js, TypeScript, Node.js.
+- **AI-Powered Forms**: Let AI do the heavy lifting. Describe the form you need, and Snap-form will generate it for you instantly. 
+  *Built using Large Language Models (LLMs) to parse natural language prompts and dynamically generate JSON schema-backed React forms.*
+- **Snippets & Templates**: Use our collection of small, reusable form snippets and fully-fledged templates to jumpstart your work. 
+  *Implemented via a robust PostgreSQL database to store reusable JSON form configurations and pre-designed Tailwind CSS components.*
+- **Seamless Integrations**: Automatically sync your form submissions with Google Sheets and effortlessly export your data as CSV files. 
+  *Powered by OAuth 2.0 to securely authenticate with Google APIs for live Sheets sync, alongside standard CSV generation libraries for export.*
+- **Template Market (Coming Soon)**: Discover, share, and use form templates created by the community. 
+  *A marketplace utilizing Next.js server actions and a scalable database to let users publish, rate, and clone form definitions.*
+- **Community Driven (Coming Soon)**: A vibrant community centered around templates and form-building best practices. 
+  *Fostering collaboration through an integrated platform built with webhooks and real-time data syncing.*
+- **Future Roadmap**: We are building out blogs, release notes, a robust admin panel, and much more! 
+  *Architected using modern React Server Components and background job queues for high performance.*
 
-**3. `worker` (Background Jobs)**
-- **Idea:** A background service responsible for scheduled tasks and async processing.
-- **Technologies:** Node.js, `node-cron`, TypeScript.
+---
 
-**Shared Packages:**
-- `@repo/ui`: A React component library shared by frontend applications.
-- `@repo/eslint-config`: Shared `eslint` configurations.
-- `@repo/typescript-config`: Shared `tsconfig.json`s used throughout the monorepo.
+## Contributing
 
+Whether you are a developer looking for an extensible form infrastructure or a user looking for the fastest way to collect data, Snap-form has you covered. We welcome contributors to help us build this vision!
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already set up for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```sh
-bun run build
-```
-
-You can build a specific package using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-```sh
-bun exec turbo build --filter=web
-bun exec turbo build --filter=api
-bun exec turbo build --filter=worker
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```sh
-bun run dev
-```
-
-This will concurrently start:
-- `apps/web` — Next.js frontend at [http://localhost:3000](http://localhost:3000)
-- `apps/api` — Express API at [http://localhost:3001](http://localhost:3001)
-- `apps/worker` — Background cron worker
-
-You can develop a specific package using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-```sh
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=api
-bun exec turbo dev --filter=worker
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```sh
-cd snap-form
-bun exec turbo login
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- **How to contribute**: Please read our [Contribution Guidelines](contribution.md) to see how you can help.
+- **Code of Conduct**: We expect everyone to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please read it to understand the community standards we uphold.
