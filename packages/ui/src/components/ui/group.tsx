@@ -26,7 +26,7 @@ export const groupVariants = cva(
 
 export function Group({
   className,
-  orientation,
+ orientation = "horizontal",
   children,
   ...props
 }: {

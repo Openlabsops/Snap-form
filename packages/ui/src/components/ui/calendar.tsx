@@ -53,22 +53,17 @@ export function Calendar({
     weekday:
       "size-(--cell-size) p-0 text-xs font-medium text-muted-foreground/72",
   };
-  const mergedClassNames: typeof defaultClassNames = Object.keys(
-    defaultClassNames,
-  ).reduce(
-    (acc, key) => {
-      const userClass = classNames?.[key as keyof typeof classNames];
-      const baseClass =
-        defaultClassNames[key as keyof typeof defaultClassNames];
+  const mergedClassNames: React.ComponentProps<typeof DayPicker>["classNames"] =
+    { ...classNames };
 
-      acc[key as keyof typeof defaultClassNames] = userClass
-        ? cn(baseClass, userClass)
-        : baseClass;
-
-      return acc;
-    },
-    { ...defaultClassNames } as typeof defaultClassNames,
-  );
+  (
+    Object.keys(defaultClassNames) as Array<keyof typeof defaultClassNames>
+  ).forEach((key) => {
+    const userClass = classNames?.[key];
+    mergedClassNames[key] = userClass
+      ? cn(defaultClassNames[key], userClass)
+      : defaultClassNames[key];
+  });
 
   const defaultComponents = {
     Chevron: ({

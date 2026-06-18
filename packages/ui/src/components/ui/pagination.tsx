@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import type * as React from "react";
 import { cn } from "@repo/ui/lib/utils";
-import { type Button, buttonVariants } from "@repo/ui/components/ui/button";
+import { buttonVariants } from "@repo/ui/components/ui/button";
+import type { ButtonProps } from "@repo/ui/components/ui/button";
 
 export function Pagination({
   className,
@@ -46,7 +47,7 @@ export function PaginationItem({
 
 export type PaginationLinkProps = {
   isActive?: boolean;
-  size?: React.ComponentProps<typeof Button>["size"];
+  size?: ButtonProps["size"];
 } & useRender.ComponentProps<"a">;
 
 export function PaginationLink({
@@ -118,12 +119,11 @@ export function PaginationEllipsis({
 }: React.ComponentProps<"span">): React.ReactElement {
   return (
     <span
-      aria-hidden
       className={cn("flex min-w-7 justify-center", className)}
       data-slot="pagination-ellipsis"
       {...props}
     >
-      <MoreHorizontalIcon className="size-5 sm:size-4" />
+      <MoreHorizontalIcon aria-hidden="true" className="size-5 sm:size-4" />
       <span className="sr-only">More pages</span>
     </span>
   );

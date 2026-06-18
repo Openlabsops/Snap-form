@@ -102,8 +102,8 @@ export function BreadcrumbEllipsis({
       role="presentation"
       {...props}
     >
-      <MoreHorizontal className="size-4" />
-      <span className="sr-only">More</span>
+    <MoreHorizontal aria-hidden="true" className="size-4" />      
+    <span className="sr-only">More</span>
     </span>
   );
 }

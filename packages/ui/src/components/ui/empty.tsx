@@ -51,6 +51,7 @@ export function EmptyHeader({
 
 export function EmptyMedia({
   className,
+  children,
   variant = "default",
   ...props
 }: React.ComponentProps<"div"> &
@@ -67,23 +68,20 @@ export function EmptyMedia({
           <div
             aria-hidden="true"
             className={cn(
-              emptyMediaVariants({ className, variant }),
+              emptyMediaVariants({ variant }),
               "pointer-events-none absolute bottom-px origin-bottom-left -translate-x-0.5 -rotate-10 scale-84 shadow-none",
             )}
           />
           <div
             aria-hidden="true"
             className={cn(
-              emptyMediaVariants({ className, variant }),
+              emptyMediaVariants({ variant }),
               "pointer-events-none absolute bottom-px origin-bottom-right translate-x-0.5 rotate-10 scale-84 shadow-none",
             )}
           />
         </>
       )}
-      <div
-        className={cn(emptyMediaVariants({ className, variant }))}
-        {...props}
-      />
+      <div className={emptyMediaVariants({ variant })}>{children}</div>
     </div>
   );
 }
@@ -106,7 +104,7 @@ export function EmptyDescription({
   ...props
 }: React.ComponentProps<"p">): React.ReactElement {
   return (
-    <div
+    <p
       className={cn(
         "text-muted-foreground text-sm [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4 [[data-slot=empty-title]+&]:mt-1",
         className,
