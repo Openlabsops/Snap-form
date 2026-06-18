@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../lib/auth";
+import { asyncHandler } from "../utils/async-handler";
 
-
-export const requireAuth = async (
+export const requireAuth: RequestHandler = asyncHandler(async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -21,4 +21,4 @@ export const requireAuth = async (
   res.locals.session = session.session;
 
   next();
-};
+});

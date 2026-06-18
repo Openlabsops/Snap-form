@@ -1,55 +1,59 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../lib/auth";
+import { asyncHandler } from "../utils/async-handler";
 
-export const registerUser = async (req: Request, res: Response) => {
-  const response = await auth.api.signUpEmail({
+
+const forwardHeaders = (webResponse: globalThis.Response, res: Response) => {
+  const setCookies = webResponse.headers.getSetCookie();
+  if (setCookies.length) {
+    res.setHeader("Set-Cookie", setCookies);
+  }
+  webResponse.headers.forEach((value, key) => {
+    if (key.toLowerCase() !== "set-cookie") {
+      res.setHeader(key, value);
+    }
+  });
+};
+
+export const registerUser: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
+  const webResponse = await auth.api.signUpEmail({
     body: {
       email: req.body.email,
       password: req.body.password,
       name: req.body.name,
     },
     headers: fromNodeHeaders(req.headers),
-    asResponse: true, 
-  });
+    asResponse: true,
+  }) as unknown as globalThis.Response;
 
-  // Copy all headers (including Set-Cookie) from better-auth's response to Express
-  response.headers.forEach((value, key) => {
-    res.setHeader(key, value);
-  });
+  forwardHeaders(webResponse, res);
+  const data = await webResponse.json();
+  res.status(webResponse.status).json(data);
+});
 
-  const data = await response.json();
-  res.status(response.status).json(data);
-};
-
-export const loginUser = async (req: Request, res: Response) => {
-  const response = await auth.api.signInEmail({
+export const loginUser: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
+  const webResponse = await auth.api.signInEmail({
     body: {
       email: req.body.email,
       password: req.body.password,
     },
     headers: fromNodeHeaders(req.headers),
     asResponse: true,
-  });
+  }) as unknown as globalThis.Response;
 
-  response.headers.forEach((value, key) => {
-    res.setHeader(key, value);
-  });
+  forwardHeaders(webResponse, res);
+  const data = await webResponse.json();
+  res.status(webResponse.status).json(data);
+});
 
-  const data = await response.json();
-  res.status(response.status).json(data);
-};
-
-export const logoutUser = async (req: Request, res: Response) => {
-  const response = await auth.api.signOut({
-    headers: fromNodeHeaders(req.headers), 
+export const logoutUser: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
+  const webResponse = await auth.api.signOut({
+    headers: fromNodeHeaders(req.headers),
     asResponse: true,
-  });
+  }) as unknown as globalThis.Response;
 
-  response.headers.forEach((value, key) => {
-    res.setHeader(key, value);
-  });
-
-  const data = await response.json();
-  res.status(response.status).json(data);
-};
+  forwardHeaders(webResponse, res);
+  const data = await webResponse.json();
+  res.status(webResponse.status).json(data);
+});
