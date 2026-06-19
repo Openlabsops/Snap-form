@@ -1,0 +1,70 @@
+// ============================================
+// FORMS & RESPONSES
+// ============================================
+
+model Form {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?  @db.Text
+
+  // Appearance
+  coverUrl     String?
+  iconSymbol   String?  @default("📝")
+
+  // Settings
+  requireEmail Boolean  @default(true)
+  published    Boolean  @default(false)
+  slug         String?  @unique
+
+  // Form structure stored as JSON
+  // Array of Field objects: { id, type, label, required?, options? }
+  fields       Json     @default("[]")
+
+  // Google Sheets integration
+  googleSheetId String?
+  googleSheetUrl String?
+
+  // Owner
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  responses    Response[]
+
+  // Metadata
+  viewCount    Int      @default(0)
+  responseCount Int     @default(0)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([published])
+  @@index([slug])
+  @@index([createdAt])
+  @@map("forms")
+}
+
+model Response {
+  id        String   @id @default(cuid())
+
+  // Related form
+  formId    String
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  // Response data
+  email     String?
+  data      Json     @default("{}") // Field responses as key-value pairs { fieldId: value }
+
+  // Metadata for analytics
+  ipAddress String?
+  userAgent String?
+  referrer  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([formId])
+  @@index([createdAt])
+  @@index([email])
+  @@map("responses")
+}

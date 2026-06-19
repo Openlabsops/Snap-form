@@ -1,0 +1,27 @@
+// ============================================
+// TEMPLATES
+// ============================================
+
+model Template {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  category    String?
+
+  // Template structure (same format as Form.fields)
+  fields      Json     @default("[]")
+
+  // Preview
+  iconSymbol  String?  @default("📋")
+
+  // Metadata
+  featured    Boolean  @default(false)
+  useCount    Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([featured])
+  @@index([category])
+  @@map("templates")
+}

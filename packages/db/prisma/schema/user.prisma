@@ -1,0 +1,40 @@
+// ============================================
+// USER
+// ============================================
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+  BUSINESS
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+
+  // Role & Subscription
+  role          Role      @default(USER)
+  plan          Plan      @default(FREE)
+
+  // Relations
+  forms         Form[]
+  sessions      Session[]
+  accounts      Account[]
+
+  // Metadata
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}

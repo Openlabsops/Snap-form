@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^26.0.0",
     "@types/pg": "^8.20.0",
     "prisma": "^7.0.0"
   },
