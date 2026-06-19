@@ -18,8 +18,10 @@
         "name": "next"
       }
     ],
-    "paths": {
-      "@/*": ["./src/*"]
+    "baseUrl": ".",
+   "paths": {
+    "@/*": ["./*"],
+    "@repo/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [

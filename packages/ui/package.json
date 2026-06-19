@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./*": "./src/*.tsx"
+    "./*": "./src/*.tsx",
+    "./components/*": "./src/components/*.tsx",
+    "./lib/*": "./src/lib/*.ts",
+    "./hooks/*": "./src/hooks/*.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
@@ -20,7 +23,12 @@
     "typescript": "5.9.2"
   },
   "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.21.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-day-picker": "^10.0.1",
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.6.0"
   }
 }
