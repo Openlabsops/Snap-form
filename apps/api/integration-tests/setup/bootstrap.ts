@@ -10,7 +10,11 @@ beforeAll(async () => {
     // Port 0 tells the OS to assign a random, free port dynamically
     testServer = app.listen(0, () => {
       const address = testServer.address();
-      const port = typeof address === "object" && address ? address.port : 4000;
+      if (!address || typeof address !== "object") {
+        reject(new Error("[Test Bootstrap] Server address is not available or invalid."));
+        return;
+      }
+      const port = address.port;
       const baseUrl = `http://localhost:${port}`;
       
       // Store in globalThis so that tests can access it dynamically

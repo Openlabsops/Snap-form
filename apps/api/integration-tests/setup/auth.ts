@@ -12,6 +12,14 @@ export interface TestUserOptions {
   plan?: "FREE" | "PREMIUM" | "BUSINESS";
 }
 
+function getTestBaseUrl(): string {
+  const baseUrl = (globalThis as any).TEST_BASE_URL;
+  if (!baseUrl) {
+    throw new Error("TEST_BASE_URL is not initialized. Ensure bootstrap preload is active.");
+  }
+  return baseUrl;
+}
+
 /**
  * Creates an authenticated Axios instance for a test user.
  * It uses the application's actual register and login endpoints to obtain
@@ -26,11 +34,12 @@ export async function createAuthenticatedClient(options?: TestUserOptions): Prom
   const name = options?.name ?? "Test User";
   const password = "TestPassword123!"; // standard password for test accounts
 
-  const baseUrl = (globalThis as any).TEST_BASE_URL || "http://localhost:3000";
+  const baseUrl = getTestBaseUrl();
 
   // Create a clean client for executing the auth flow
   const authClient = axios.create({
     baseURL: baseUrl,
+    timeout: 10000,
     validateStatus: () => true,
   });
 
@@ -60,7 +69,10 @@ export async function createAuthenticatedClient(options?: TestUserOptions): Prom
   if (!setCookieHeaders || setCookieHeaders.length === 0) {
     throw new Error("No Set-Cookie header returned from login");
   }
-  const cookie = Array.isArray(setCookieHeaders) ? setCookieHeaders.join("; ") : setCookieHeaders;
+  const cookiesArray = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders];
+  const cookie = cookiesArray
+    .map(c => c.split(";")[0])
+    .join("; ");
 
   const user = loginRes.data.user;
 
@@ -81,6 +93,7 @@ export async function createAuthenticatedClient(options?: TestUserOptions): Prom
   // 5. Create Axios instance with authenticated Cookie header
   const client = axios.create({
     baseURL: baseUrl,
+    timeout: 10000,
     headers: {
       "Cookie": cookie,
     },
@@ -98,9 +111,10 @@ export async function createAuthenticatedClient(options?: TestUserOptions): Prom
  * Creates an unauthenticated Axios instance.
  */
 export function createAnonymousClient(): AxiosInstance {
-  const baseUrl = (globalThis as any).TEST_BASE_URL || "http://localhost:3000";
+  const baseUrl = getTestBaseUrl();
   return axios.create({
     baseURL: baseUrl,
+    timeout: 10000,
     validateStatus: () => true,
   });
 }

@@ -1,17 +1,20 @@
 import { prisma } from "@repo/db";
+import crypto from "crypto";
 
 /**
  * Clean all tables in the database to guarantee a fresh state per module/test.
  * TRUNCATE with CASCADE resets tables and their IDs/sequences in PostgreSQL.
  */
 export async function cleanDb() {
-  await prisma.response.deleteMany({});
-  await prisma.form.deleteMany({});
-  await prisma.session.deleteMany({});
-  await prisma.account.deleteMany({});
-  await prisma.verification.deleteMany({});
-  await prisma.user.deleteMany({});
-  await prisma.template.deleteMany({});
+  await prisma.$transaction([
+    prisma.response.deleteMany({}),
+    prisma.form.deleteMany({}),
+    prisma.session.deleteMany({}),
+    prisma.account.deleteMany({}),
+    prisma.verification.deleteMany({}),
+    prisma.user.deleteMany({}),
+    prisma.template.deleteMany({}),
+  ]);
 }
 
 /**
