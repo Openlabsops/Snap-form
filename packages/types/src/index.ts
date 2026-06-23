@@ -1,5 +1,2 @@
-export type ApiResponse<T> = {
-  data: T;
-  success: boolean;
-  message?: string;
-};
+export type { ApiResponse } from "./api-response.js";
+export * from "./form-schema.js";
