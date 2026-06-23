@@ -651,7 +651,7 @@ export function SidebarMenuSkeleton({
   const [width, setWidth] = React.useState("70%");
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setWidth is stable (state setter)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: randomizes skeleton width on mount to avoid hydration mismatch
     setWidth(`${Math.floor(Math.random() * 40) + 50}%`);
   }, []);
 
