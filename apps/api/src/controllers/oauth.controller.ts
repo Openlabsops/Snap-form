@@ -13,7 +13,11 @@ export const oauthCallback = asyncHandler(async (req, res) => {
     return;
   }
 
-  const destination = session.user.username === null
+  const username =
+    typeof session.user.username === "string"
+      ? session.user.username.trim()
+      : "";
+  const destination = username.length === 0
     ? `${config.frontend.url}/onboarding`
     : `${config.frontend.url}/dashboard`;
 
