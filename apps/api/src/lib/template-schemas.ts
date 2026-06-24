@@ -17,6 +17,9 @@ export const CreateTemplateSchema = z.object({
 
   // Publish immediately or save as draft
   status: z.enum(["DRAFT", "PUBLISHED"]).default("PUBLISHED"),
+}).refine((d) => Boolean(d.formId) !== Boolean(d.fields), {
+  message: "Provide exactly one of `formId` or `fields`",
+  path: ["fields"],
 });
 
 export type CreateTemplateInput = z.infer<typeof CreateTemplateSchema>;

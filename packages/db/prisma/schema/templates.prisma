@@ -28,8 +28,8 @@ model Template {
   formId      String?
   
   // Owner
-  createdById String
-  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
   
   // Metadata
   featured    Boolean        @default(false)

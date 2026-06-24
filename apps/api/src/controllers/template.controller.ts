@@ -18,6 +18,7 @@ export const createTemplate: RequestHandler = asyncHandler(
 		} = req.body;
 
 		let resolvedFields = fields ?? [];
+		let finalFormId = null;
 
 		if (!fields && formId) {
 			const sourceForm = await prisma.form.findFirst({
@@ -34,6 +35,7 @@ export const createTemplate: RequestHandler = asyncHandler(
 			}
 
 			resolvedFields = sourceForm.fields;
+			finalFormId = formId;
 		}
 
 		const template = await prisma.template.create({
@@ -44,7 +46,7 @@ export const createTemplate: RequestHandler = asyncHandler(
 				iconSymbol,
 				images: images ?? [],
 				fields: resolvedFields,
-				formId: formId ?? null,
+				formId: finalFormId,
 				status: status ?? "PUBLISHED",
 				createdById: userId,
 			},
@@ -59,6 +61,8 @@ export const createTemplate: RequestHandler = asyncHandler(
 export const listTemplates: RequestHandler = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { category } = req.query;
+		const take = Math.min(Number(req.query.limit) || 20, 50);
+		const skip = Math.max(Number(req.query.offset) || 0, 0);
 
 		const where: Record<string, unknown> = { status: "PUBLISHED" };
 		if (typeof category === "string" && category.length > 0) {
@@ -67,6 +71,8 @@ export const listTemplates: RequestHandler = asyncHandler(
 
 		const templates = await prisma.template.findMany({
 			where,
+			take,
+			skip,
 			orderBy: [
 				{ featured: "desc" },
 				{ useCount: "desc" },
