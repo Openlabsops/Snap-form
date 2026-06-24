@@ -26,9 +26,8 @@ model Account {
   userId            String
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type              String
-  provider          String
-  providerAccountId String
+  accountId         String
+  providerId        String
 
   refreshToken      String? @db.Text
   accessToken       String? @db.Text
@@ -37,11 +36,12 @@ model Account {
   scope             String?
   idToken           String? @db.Text
   sessionState      String?
+  password          String?
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  @@unique([provider, providerAccountId])
+  @@unique([providerId, accountId])
   @@index([userId])
   @@map("accounts")
 }

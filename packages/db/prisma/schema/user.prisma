@@ -20,7 +20,7 @@ model User {
   name          String?
   username      String?    @unique
   image         String?
-  emailVerified DateTime?
+  emailVerified Boolean @default(false)
 
   // Role & Subscription
   role          Role      @default(USER)

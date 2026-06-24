@@ -28,7 +28,7 @@ export type UpdateFormInput = z.infer<typeof UpdateFormSchema>;
 
 
 export const SubmitResponseSchema = z.object({
-  email: z.email().optional(),
+  email: z.string().email().optional(),
   data: FormResponseDataSchema,
 });
 

@@ -6,10 +6,10 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
+      "api": [
+        "../../apps/api/src/app.ts"
       ]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["integration-tests/**/*"]
 }
