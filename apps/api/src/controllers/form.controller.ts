@@ -14,7 +14,7 @@ export const listForms: RequestHandler = asyncHandler(
 
     // 1. Extract query params
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.max(1, parseInt(req.query.limit as string) || 10);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10));
     const search = req.query.search as string | undefined;
     const published = req.query.published as string | undefined;
     // 2. Build where clause
@@ -28,7 +28,8 @@ export const listForms: RequestHandler = asyncHandler(
       whereClause.published = published === "true";
     }
     // 3. Fetch data and count in parallel
-    const skip = (page - 1) * limit;
+    const parsedSkip = req.query.skip ? parseInt(req.query.skip as string) : undefined;
+    const skip = parsedSkip !== undefined && !isNaN(parsedSkip) ? parsedSkip : (page - 1) * limit;
 
     const [forms, total] = await Promise.all([
       prisma.form.findMany({

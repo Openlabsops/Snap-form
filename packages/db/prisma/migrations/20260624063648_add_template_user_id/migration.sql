@@ -5,7 +5,7 @@
 
 */
 -- AlterTable
-ALTER TABLE "templates" ADD COLUMN     "userId" TEXT NOT NULL;
+ALTER TABLE "templates" ADD COLUMN "userId" TEXT;
 
 -- CreateIndex
 CREATE INDEX "templates_userId_idx" ON "templates"("userId");
