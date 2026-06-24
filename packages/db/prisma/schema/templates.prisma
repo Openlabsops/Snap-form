@@ -1,27 +1,45 @@
-// ============================================
-// TEMPLATES
-// ============================================
+// ============================================ 
+// TEMPLATES 
+// ============================================ 
+
+enum TemplateStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
 
 model Template {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
-  description String?  @db.Text
+  description String?        @db.Text
   category    String?
-
+  
   // Template structure (same format as Form.fields)
-  fields      Json     @default("[]")
-
+  fields      Json           @default("[]")
+  
   // Preview
-  iconSymbol  String?  @default("📋")
-
+  iconSymbol  String?        @default("📋")
+  images      String[]       @default([])
+  
+  // Status
+  status      TemplateStatus @default(DRAFT)
+  
+  // Source form (optional back-reference)
+  formId      String?
+  
+  // Owner
+  createdById String
+  createdBy   User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  
   // Metadata
-  featured    Boolean  @default(false)
-  useCount    Int      @default(0)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  featured    Boolean        @default(false)
+  useCount    Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([featured])
   @@index([category])
+  @@index([createdById])
+  @@index([status])
   @@map("templates")
 }

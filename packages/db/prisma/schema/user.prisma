@@ -30,6 +30,7 @@ model User {
   forms         Form[]
   sessions      Session[]
   accounts      Account[]
+  templates     Template[]
 
   // Metadata
   createdAt     DateTime  @default(now())
