@@ -14,22 +14,26 @@
 CREATE TYPE "FormType" AS ENUM ('SCROLL', 'STEP', 'CHAT');
 
 -- DropIndex
-DROP INDEX "accounts_provider_providerAccountId_key";
+DROP INDEX IF EXISTS "accounts_provider_providerAccountId_key";
 
--- AlterTable
-ALTER TABLE "accounts" DROP COLUMN "provider",
-DROP COLUMN "providerAccountId",
-DROP COLUMN "type",
-ADD COLUMN     "accountId" TEXT NOT NULL,
-ADD COLUMN     "password" TEXT,
-ADD COLUMN     "providerId" TEXT NOT NULL;
+-- AlterTable (Accounts: Rename instead of drop)
+ALTER TABLE "accounts" RENAME COLUMN "provider" TO "providerId";
+ALTER TABLE "accounts" RENAME COLUMN "providerAccountId" TO "accountId";
+ALTER TABLE "accounts" ADD COLUMN "password" TEXT;
+ALTER TABLE "accounts" DROP COLUMN IF EXISTS "type";
 
--- AlterTable
-ALTER TABLE "forms" ADD COLUMN     "type" "FormType" NOT NULL DEFAULT 'SCROLL';
+-- AlterTable (Forms: Add Type)
+ALTER TABLE "forms" ADD COLUMN "type" "FormType" NOT NULL DEFAULT 'SCROLL';
 
--- AlterTable
-ALTER TABLE "users" DROP COLUMN "emailVerified",
-ADD COLUMN     "emailVerified" BOOLEAN NOT NULL DEFAULT false;
+-- AlterTable (Users: Safely convert emailVerified to boolean)
+ALTER TABLE "users" ALTER COLUMN "emailVerified" TYPE BOOLEAN USING (
+  CASE 
+    WHEN "emailVerified" IS NOT NULL THEN true 
+    ELSE false 
+  END
+);
+ALTER TABLE "users" ALTER COLUMN "emailVerified" SET DEFAULT false;
+ALTER TABLE "users" ALTER COLUMN "emailVerified" SET NOT NULL;
 
 -- CreateIndex
 CREATE UNIQUE INDEX "accounts_providerId_accountId_key" ON "accounts"("providerId", "accountId");

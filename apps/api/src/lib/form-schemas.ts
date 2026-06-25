@@ -2,6 +2,12 @@ import { z } from "zod";
 import { FormDefinitionSchema, FormResponseDataSchema } from "@repo/types";
 
 
+const FormTypeSchema = z
+  .string()
+  .trim()
+  .transform((value: string) => value.toUpperCase())
+  .pipe(z.enum(["SCROLL", "STEP", "CHAT"]));
+
 export const CreateFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(1000).optional(),
@@ -14,7 +20,7 @@ export const CreateFormSchema = z.object({
     .min(3)
     .max(100)
     .optional(),
-  type: z.enum(["SCROLL", "STEP", "CHAT"]).default("SCROLL"),
+  type: FormTypeSchema.default("SCROLL"),
   definition: FormDefinitionSchema.default({ version: "1.0", elements: [] }),
 });
 
@@ -34,7 +40,7 @@ export const SubmitResponseSchema = z.object({
 });
 
 export const GenerateFormSchema = z.object({
-  prompt: z.string().optional()
+  prompt: z.string().trim().min(1, "Prompt cannot be empty").max(1000, "Prompt is too long").optional()
 });
 
 
