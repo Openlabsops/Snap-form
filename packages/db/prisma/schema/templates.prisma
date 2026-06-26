@@ -33,5 +33,6 @@ model Template {
   @@index([category])
   @@index([userId])
   @@index([createdAt])
+  @@index([formId])
   @@map("templates")
 }

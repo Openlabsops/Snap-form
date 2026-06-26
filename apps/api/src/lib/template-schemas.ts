@@ -7,7 +7,12 @@ export const CreateTemplateSchema = z.object({
   category: z.string().max(100).optional(),
   iconSymbol: z.string().max(10).optional(),
   images: z
-    .array(z.string().url("Each image must be a valid URL"))
+    .array(
+      z
+        .string()
+        .url("Each image must be a valid URL")
+        .startsWith("http", "Only HTTP/HTTPS URLs are allowed")
+    )
     .max(5, "Maximum 5 images allowed")
     .default([]),
 

@@ -20,7 +20,8 @@ export const createTemplate: RequestHandler = asyncHandler(
             fields,
         } = req.body;
 
-        let resolvedFields = fields;
+        // Normalize direct fields input to store only the elements array
+        let resolvedFields = fields ? fields.elements : undefined;
         let verifiedFormId: string | null = null;
 
         // When formId is provided, verify ownership and snapshot the fields
