@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { Request, Response, RequestHandler } from "express";
 import { asyncHandler } from "../utils/async-handler";
 import { FormDefinitionSchema } from "@repo/types";
+import { CreateFormInput, UpdateFormInput } from "../lib/form-schemas";
 import prisma from "../lib/db";
 
 // ============================================
@@ -75,24 +76,42 @@ export const listForms: RequestHandler = asyncHandler(
 export const createForm: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = res.locals.user.id as string;
-    const { title, description, coverUrl, iconSymbol, requireEmail, slug, definition } =
-      req.body;
+    const { title, description, coverUrl, iconSymbol, requireEmail, slug, definition, type } = req.body as CreateFormInput;
 
-    const form = await prisma.form.create({
-      data: {
-        userId,
-        title,
-        description,
-        coverUrl,
-        iconSymbol,
-        requireEmail,
-        slug,
-        // Store the full FormDefinition object as jsonb
-        fields: definition,
-      },
-    });
-
-    res.status(201).json({ success: true, data: form });
+    try {
+      const form = await prisma.form.create({
+        data: {
+          userId,
+          title,
+          description,
+          coverUrl,
+          iconSymbol,
+          requireEmail,
+          slug,
+          type,
+          // Store the full FormDefinition object as jsonb
+          fields: definition,
+        },
+        select: {
+          id: true, title: true, description: true, iconSymbol: true,
+          coverUrl: true, published: true, slug: true, type: true,
+          requireEmail: true, responseCount: true, viewCount: true,
+          fields: true, createdAt: true, updatedAt: true,
+        },
+      });
+      const definitionResult = FormDefinitionSchema.safeParse(form.fields);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { fields: _fields, ...formWithoutFields } = form;
+      res.status(201).json({
+        success: true, data: { ...formWithoutFields, definition: definitionResult.success ? definitionResult.data : form.fields }
+      });
+    } catch (err: unknown) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        res.status(409).json({ success: false, message: "A form with this slug already exists" });
+        return;
+      }
+      throw err;
+    }
   },
 );
 
@@ -106,7 +125,15 @@ export const getForm: RequestHandler = asyncHandler(
 
     const form = await prisma.form.findFirst({
       where: { id: req.params.id, userId },
+      select: {
+        id: true, title: true, description: true, iconSymbol: true,
+        coverUrl: true, published: true, slug: true, type: true,
+        requireEmail: true, responseCount: true, viewCount: true,
+        fields: true, // needed to parse into definition
+        createdAt: true, updatedAt: true,
+      },
     });
+
 
     if (!form) {
       res.status(404).json({ success: false, message: "Form not found" });
@@ -121,8 +148,9 @@ export const getForm: RequestHandler = asyncHandler(
       res.status(500).json({ success: false, message: "Form definition is malformed" });
       return;
     }
-
-    res.json({ success: true, data: { ...form, definition: definitionResult.data } });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { fields: _fields, ...formWithoutFields } = form;
+    res.json({ success: true, data: { ...formWithoutFields, definition: definitionResult.data } });
   },
 );
 
@@ -144,24 +172,46 @@ export const updateForm: RequestHandler = asyncHandler(
       return;
     }
 
-    const { title, description, coverUrl, iconSymbol, requireEmail, slug, definition } =
-      req.body;
+    const { title, description, coverUrl, iconSymbol, requireEmail, slug, definition, type } = req.body as UpdateFormInput;
 
-    const updated = await prisma.form.update({
-      where: { id: req.params.id },
-      data: {
-        ...(title !== undefined && { title }),
-        ...(description !== undefined && { description }),
-        ...(coverUrl !== undefined && { coverUrl }),
-        ...(iconSymbol !== undefined && { iconSymbol }),
-        ...(requireEmail !== undefined && { requireEmail }),
-        ...(slug !== undefined && { slug }),
-        // Only update fields if definition was provided in the request
-        ...(definition !== undefined && { fields: definition }),
-      },
-    });
+    try {
+      const updated = await prisma.form.update({
+        where: { id: req.params.id },
+        data: {
+          ...(title !== undefined && { title }),
+          ...(description !== undefined && { description }),
+          ...(coverUrl !== undefined && { coverUrl }),
+          ...(iconSymbol !== undefined && { iconSymbol }),
+          ...(requireEmail !== undefined && { requireEmail }),
+          ...(slug !== undefined && { slug }),
+          ...(type !== undefined && { type }),
+          ...(definition !== undefined && { fields: definition }),
 
-    res.json({ success: true, data: updated });
+        },
+        select: {
+          id: true, title: true, description: true, iconSymbol: true,
+          coverUrl: true, published: true, slug: true, type: true,
+          requireEmail: true, responseCount: true, viewCount: true,
+          fields: true, createdAt: true, updatedAt: true,
+        },
+      });
+      const definitionResult = FormDefinitionSchema.safeParse(updated.fields);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { fields: _fields, ...formWithoutFields } = updated;
+      res.json({
+        success: true, data: {
+          ...formWithoutFields,
+          definition: definitionResult.success ? definitionResult.data : updated.fields
+        }
+      });
+    } catch (err: unknown) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err?.code === "P2002") {
+        res.status(409).json({ success: false, message: "A form with this slug already exists" });
+        return;
+      }
+      throw err;
+    }
+
   },
 );
 
@@ -207,8 +257,31 @@ export const togglePublish: RequestHandler = asyncHandler(
     const updated = await prisma.form.update({
       where: { id: req.params.id },
       data: { published: !form.published },
+      select: { id: true, published: true, updatedAt: true },
     });
+
 
     res.json({ success: true, data: updated });
   },
+);
+
+// ============================================
+// POST /api/v1/forms/generate — generate form with AI
+// ============================================
+
+export const generateForm: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { prompt } = req.body;
+
+    // TODO: Connect real LLM logic here later. 
+    // For now, return a basic mock structure so the frontend can test.
+    const dummyDefinition = {
+      version: "1.0",
+      elements: [
+        { id: "q1", type: "text", label: `AI generated question for: ${prompt || "General"}`, required: true }
+      ]
+    };
+
+    res.json({ success: true, data: { definition: dummyDefinition } });
+  }
 );
