@@ -20,6 +20,9 @@ router.all("/api/auth/*", toNodeHandler(auth));
 router.use("/api/v1/auth/manual", userAuthRouter);
 router.use("/api/v1/auth/oauth", oauthRouter);
 router.use("/api/v1/admin/auth", adminAuthRouter);
+// NOTE: formRouter MUST be mounted before responseRouter.
+// formRouter handles GET /api/v1/forms/:id/responses/export/csv — if responseRouter
+// is mounted first, Express will intercept that path and return 404.
 router.use("/api/v1/forms", formRouter);
 router.use("/api/v1/templates", templateRouter);
 router.use("/api/v1/forms/:id/responses", responseRouter);

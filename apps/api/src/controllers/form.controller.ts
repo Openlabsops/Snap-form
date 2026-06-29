@@ -285,3 +285,186 @@ export const generateForm: RequestHandler = asyncHandler(
     res.json({ success: true, data: { definition: dummyDefinition } });
   }
 );
+
+// ============================================
+// GET /api/v1/forms/:id/analytics
+// ============================================
+
+export const getAnalytics: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = res.locals.user.id as string;
+
+    const form = await prisma.form.findFirst({
+      where: { id: req.params.id, userId },
+      select: { id: true, viewCount: true, responseCount: true },
+    });
+
+    if (!form) {
+      res.status(404).json({ success: false, message: "Form not found" });
+      return;
+    }
+
+    const recentResponses = await prisma.response.findMany({
+      where: { formId: form.id },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { id: true, email: true, createdAt: true },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        viewCount: form.viewCount,
+        responseCount: form.responseCount,
+        recentResponses,
+      },
+    });
+  },
+);
+
+// ============================================
+// POST /api/v1/forms/:id/integrations/google-sheets
+// ============================================
+
+export const setupGoogleSheets: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = res.locals.user.id as string;
+    const { accessToken, refreshToken, spreadsheetId, spreadsheetUrl } = req.body;
+
+    const form = await prisma.form.findFirst({
+      where: { id: req.params.id, userId },
+      select: { id: true },
+    });
+
+    if (!form) {
+      res.status(404).json({ success: false, message: "Form not found" });
+      return;
+    }
+
+    const [integration] = await prisma.$transaction([
+      prisma.formIntegration.upsert({
+        where: { formId_provider: { formId: form.id, provider: "GOOGLE_SHEETS" } },
+        update: { accessToken, refreshToken, spreadsheetId, spreadsheetUrl },
+        create: { formId: form.id, provider: "GOOGLE_SHEETS", accessToken, refreshToken, spreadsheetId, spreadsheetUrl },
+      }),
+      prisma.form.update({
+        where: { id: form.id },
+        data: { googleSheetId: spreadsheetId, googleSheetUrl: spreadsheetUrl },
+      }),
+    ]);
+    
+    res.json({
+      success: true,
+      data:
+      {
+        id: integration.id,
+        formId: integration.formId,
+        provider: integration.provider,
+        spreadsheetId: integration.spreadsheetId,
+        spreadsheetUrl: integration.spreadsheetUrl,
+        createdAt: integration.createdAt
+      }
+    });
+  },
+);
+
+// ============================================
+// DELETE /api/v1/forms/:id/integrations/google-sheets
+// ============================================
+
+export const disconnectGoogleSheets: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = res.locals.user.id as string;
+
+    const form = await prisma.form.findFirst({
+      where: { id: req.params.id, userId },
+      select: { id: true },
+    });
+
+    if (!form) {
+      res.status(404).json({ success: false, message: "Form not found" });
+      return;
+    }
+
+    try {
+      await prisma.formIntegration.delete({
+        where: { formId_provider: { formId: form.id, provider: "GOOGLE_SHEETS" } },
+      });
+    } catch (err: unknown) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
+        res.status(404).json({ success: false, message: "No Google Sheets integration found" });
+        return;
+      }
+      throw err;
+    }
+
+
+    await prisma.form.update({
+      where: { id: form.id },
+      data: { googleSheetId: null, googleSheetUrl: null },
+    });
+
+    res.json({ success: true, message: "Google Sheets integration removed" });
+  },
+);
+
+
+// ============================================
+// GET /api/v1/forms/:id/responses/export/csv
+// ============================================
+
+
+// Escape a CSV cell: wrap in quotes, escape internal quotes, prevent formula injection
+const escapeCell = (val: unknown): string => {
+  const str = String(val ?? "");
+  const safe = str.startsWith("=") || str.startsWith("+") || str.startsWith("-") || str.startsWith("@")
+    ? `'${str}` : str;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
+
+
+export const exportCsv: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = res.locals.user.id as string;
+
+    const form = await prisma.form.findFirst({
+      where: { id: req.params.id, userId },
+      select: { id: true, title: true, slug: true, fields: true },
+    });
+
+    if (!form) {
+      res.status(404).json({ success: false, message: "Form not found" });
+      return;
+    }
+
+    // Extract field labels from form definition for CSV headers
+    const definition = FormDefinitionSchema.safeParse(form.fields);
+    const fieldLabels: { id: string; label: string }[] = definition.success
+      ? definition.data.elements.map((el: { id: string; label: string; }) => ({ id: el.id, label: el.label }))
+      : [];
+
+    const responses = await prisma.response.findMany({
+      where: { formId: form.id },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, email: true, data: true, createdAt: true },
+    });
+
+    // Build CSV with dynamic field columns
+    const staticHeaders = [escapeCell("id"), escapeCell("email"), escapeCell("submittedAt")];
+    const fieldHeaders = fieldLabels.map((f) => escapeCell(f.label));
+    const header = [...staticHeaders, ...fieldHeaders].join(",");
+
+    const rows = responses.map((r) => {
+      const data = r.data as Record<string, unknown>;
+      const fieldValues = fieldLabels.map((f) => escapeCell(data[f.id]));
+      return [escapeCell(r.id), escapeCell(r.email ?? ""), escapeCell(r.createdAt.toISOString()), ...fieldValues].join(",");
+    });
+
+    const csv = [header, ...rows].join("\n");
+    const filename = form.slug ?? form.id;
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="form-${filename}-responses.csv"`);
+    res.send(csv);
+  },
+);

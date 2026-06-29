@@ -24,15 +24,14 @@ export const CreateFormSchema = z.object({
   definition: FormDefinitionSchema.default({ version: "1.0", elements: [] }),
 });
 
-export type CreateFormInput = z.infer<typeof CreateFormSchema>;
-
-
-
 export const UpdateFormSchema = CreateFormSchema.partial();
 
-export type UpdateFormInput = z.infer<typeof UpdateFormSchema>;
-
-
+export const GoogleSheetsIntegrationSchema = z.object({
+  accessToken: z.string().min(1),
+  refreshToken: z.string().optional(),
+  spreadsheetId: z.string().min(1),
+  spreadsheetUrl: z.string().url(),
+});
 
 export const SubmitResponseSchema = z.object({
   email: z.string().email().optional(),
@@ -44,5 +43,8 @@ export const GenerateFormSchema = z.object({
 });
 
 
+export type CreateFormInput = z.infer<typeof CreateFormSchema>;
+export type UpdateFormInput = z.infer<typeof UpdateFormSchema>;
+export type GoogleSheetsIntegrationInput = z.infer<typeof GoogleSheetsIntegrationSchema>;
 export type SubmitResponseInput = z.infer<typeof SubmitResponseSchema>;
 export type GenerateFormInput = z.infer<typeof GenerateFormSchema>;
