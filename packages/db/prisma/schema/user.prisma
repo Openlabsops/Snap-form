@@ -32,6 +32,12 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  // Onboarding
+  onboardingCompleted Boolean @default(false)
+  xUrl                String?
+  linkedinUrl         String?
+  instagramUrl        String?
+
   // Metadata
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
