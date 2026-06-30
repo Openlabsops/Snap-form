@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/async-handler";
 import { FormDefinitionSchema } from "@repo/types";
 import { CreateFormInput, UpdateFormInput } from "../lib/form-schemas";
 import prisma from "../lib/db";
+import { formatZodErrors } from "@/middleware/validate";
 
 // ============================================
 // GET /api/v1/forms — list user's forms
@@ -174,6 +175,18 @@ export const updateForm: RequestHandler = asyncHandler(
 
     const { title, description, coverUrl, iconSymbol, requireEmail, slug, definition, type } = req.body as UpdateFormInput;
 
+    if (definition !== undefined) {
+      const parsed = FormDefinitionSchema.safeParse(definition);
+      if (!parsed.success) {
+        res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: formatZodErrors(parsed.error),
+        });
+        return;
+      }
+    }
+
     try {
       const updated = await prisma.form.update({
         where: { id: req.params.id },
@@ -205,13 +218,18 @@ export const updateForm: RequestHandler = asyncHandler(
         }
       });
     } catch (err: unknown) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err?.code === "P2002") {
-        res.status(409).json({ success: false, message: "A form with this slug already exists" });
-        return;
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === "P2002") {
+          res.status(409).json({ success: false, message: "A form with this slug already exists" });
+          return;
+        }
+        if (err.code === "P2025") {
+          res.status(404).json({ success: false, message: "Form not found" });
+          return;
+        }
       }
       throw err;
     }
-
   },
 );
 
@@ -352,7 +370,7 @@ export const setupGoogleSheets: RequestHandler = asyncHandler(
         data: { googleSheetId: spreadsheetId, googleSheetUrl: spreadsheetUrl },
       }),
     ]);
-    
+
     res.json({
       success: true,
       data:

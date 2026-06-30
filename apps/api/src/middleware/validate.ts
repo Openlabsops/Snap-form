@@ -36,7 +36,7 @@ export function validate<T>(schema: ZodSchema<T>): RequestHandler {
  * Converts Zod's flat issue array into a path → message record.
  * E.g. { "elements[0].label": "Label cannot be empty" }
  */
-function formatZodErrors(error: ZodError): Record<string, string> {
+export function formatZodErrors(error: ZodError): Record<string, string> {
   return error.issues.reduce<Record<string, string>>((acc, issue) => {
     const path = issue.path.join(".");
     acc[path || "_root"] = issue.message;
