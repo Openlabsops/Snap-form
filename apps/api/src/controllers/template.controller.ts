@@ -14,6 +14,8 @@ export const createTemplate: RequestHandler = asyncHandler(
             title,
             description,
             category,
+            price,
+            isPublic,
             iconSymbol,
             images,
             formId,
@@ -48,6 +50,8 @@ export const createTemplate: RequestHandler = asyncHandler(
                 title,
                 description,
                 category,
+                price: price ?? 0,
+                isPublic: isPublic ?? true,
                 iconSymbol,
                 images: images ?? [],
                 fields: resolvedFields,
@@ -70,7 +74,7 @@ export const getOwnedTemplates: RequestHandler = asyncHandler(
 
         // 1. Extract query params
         const page = Math.max(1, parseInt(req.query.page as string) || 1);
-         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10));
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10));
         const search = req.query.search as string | undefined;
         const category = req.query.category as string | undefined;
 
@@ -105,6 +109,76 @@ export const getOwnedTemplates: RequestHandler = asyncHandler(
                     useCount: true,
                     createdAt: true,
                     updatedAt: true,
+                },
+            }),
+            prisma.template.count({ where: whereClause })
+        ]);
+
+        // 4. Return paginated response
+        res.json({
+            success: true,
+            data: templates,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+    },
+);
+
+// ============================================
+// GET /api/v1/templates/community — public front page
+// ============================================
+
+export const getCommunityTemplates: RequestHandler = asyncHandler(
+    async (req: Request, res: Response) => {
+        // 1. Extract query params
+        const page = Math.max(1, parseInt(req.query.page as string) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10));
+        const search = req.query.search as string | undefined;
+        const category = req.query.category as string | undefined;
+
+        // 2. Build where clause (ONLY public templates)
+        const whereClause: Prisma.TemplateWhereInput = { isPublic: true };
+
+        if (search) {
+            whereClause.title = { contains: search, mode: "insensitive" };
+        }
+        if (category) {
+            whereClause.category = category;
+        }
+
+        const skip = (page - 1) * limit;
+
+        // 3. Fetch data and count in parallel
+        const [templates, total] = await Promise.all([
+            prisma.template.findMany({
+                where: whereClause,
+                orderBy: { useCount: "desc" }, // Sort by popularity!
+                skip,
+                take: limit,
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    category: true,
+                    iconSymbol: true,
+                    featured: true,
+                    useCount: true,
+                    price: true,
+                    isPublic: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            username: true,
+                            image: true
+                        }
+                    }
                 },
             }),
             prisma.template.count({ where: whereClause })

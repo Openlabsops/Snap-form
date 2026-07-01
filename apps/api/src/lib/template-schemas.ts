@@ -5,6 +5,8 @@ export const CreateTemplateSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(2000).optional(),
   category: z.string().max(100).optional(),
+  price: z.number().int().min(0).optional(),
+  isPublic: z.boolean().optional(),
   iconSymbol: z.string().max(10).optional(),
   images: z
     .array(

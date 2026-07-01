@@ -8,6 +8,10 @@ model Template {
   description String? @db.Text
   category    String?
 
+  // Required by community APIs
+  price       Int     @default(0)
+  isPublic    Boolean @default(true)
+
   // Template structure (same format as Form.fields)
   fields Json @default("[]")
 
@@ -34,5 +38,6 @@ model Template {
   @@index([userId])
   @@index([createdAt])
   @@index([formId])
+  @@index([isPublic])
   @@map("templates")
 }
