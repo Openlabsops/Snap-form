@@ -25,3 +25,22 @@ export const CreateTemplateSchema = z.object({
 });
 
 export type CreateTemplateInput = z.infer<typeof CreateTemplateSchema>;
+
+// ============================================
+// Review Validation
+// ============================================
+
+export const CreateReviewSchema = z.object({
+  stars: z
+    .number()
+    .int("Stars must be a whole number")
+    .min(1, "Minimum rating is 1 star")
+    .max(5, "Maximum rating is 5 stars"),
+  text: z
+    .string()
+    .trim()
+    .max(2000, "Review text cannot exceed 2000 characters")
+    .optional(),
+});
+
+export type CreateReviewInput = z.infer<typeof CreateReviewSchema>;
