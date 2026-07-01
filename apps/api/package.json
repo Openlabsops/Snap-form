@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint src/",
-    "dev": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
     "build": "tsc"
   },
   "dependencies": {

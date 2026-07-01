@@ -1,44 +1,51 @@
 // ============================================
 // FORMS & RESPONSES
 // ============================================
+enum FormType {
+  SCROLL
+  STEP
+  CHAT
+}
 
 model Form {
-  id           String   @id @default(cuid())
-  title        String
-  description  String?  @db.Text
+  id          String  @id @default(cuid())
+  title       String
+  description String? @db.Text
 
   // Appearance
-  coverUrl     String?
-  iconSymbol   String?  @default("📝")
+  coverUrl   String?
+  iconSymbol String? @default("📝")
 
   // Settings
   requireEmail Boolean  @default(true)
   published    Boolean  @default(false)
   slug         String?  @unique
-
+  type         FormType @default(SCROLL)
   // Form structure stored as JSON
   // Array of Field objects: { id, type, label, required?, options? }
   fields       Json     @default("[]")
 
   // Google Sheets integration
-  googleSheetId String?
+  googleSheetId  String?
   googleSheetUrl String?
 
   // Owner
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  responses    Response[]
-  templates    Template[]
-  purchasedAsTemplate UserOwnedTemplate[]
+  // Relation
+ 
+  responses        Response[]
+  templates        Template[]
+   purchasedAsTemplate UserOwnedTemplate[]
+  formIntegrations FormIntegration[]
 
   // Metadata
-  viewCount    Int      @default(0)
-  responseCount Int     @default(0)
+  viewCount     Int @default(0)
+  responseCount Int @default(0)
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([published])
@@ -48,15 +55,15 @@ model Form {
 }
 
 model Response {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Related form
-  formId    String
-  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId String
+  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
 
   // Response data
-  email     String?
-  data      Json     @default("{}") // Field responses as key-value pairs { fieldId: value }
+  email String?
+  data  Json    @default("{}") // Field responses as key-value pairs { fieldId: value }
 
   // Metadata for analytics
   ipAddress String?
@@ -69,4 +76,30 @@ model Response {
   @@index([createdAt])
   @@index([email])
   @@map("responses")
+}
+
+enum IntegrationProvider {
+  GOOGLE_SHEETS
+}
+
+model FormIntegration {
+  id String @id @default(cuid())
+
+  // Related form
+  formId String
+  form   Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  // Google Sheets credentials
+  provider       IntegrationProvider @default(GOOGLE_SHEETS)
+  accessToken    String  @db.Text
+  refreshToken   String? @db.Text
+  spreadsheetId  String
+  spreadsheetUrl String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([formId, provider])
+  @@index([formId])
+  @@map("form_integrations")
 }

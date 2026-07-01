@@ -13,7 +13,7 @@ export const requireAuth: RequestHandler = asyncHandler(async (
   });
 
   if (!session) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ success: false, message: "Unauthorized" });
     return;
   }
 
