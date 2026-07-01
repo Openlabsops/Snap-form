@@ -14,12 +14,10 @@ export const listForms: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = res.locals.user.id as string;
 
-    // 1. Extract query params
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 10));
     const search = req.query.search as string | undefined;
     const published = req.query.published as string | undefined;
-    // 2. Build where clause
     const whereClause: Prisma.FormWhereInput = { userId };
 
     if (search) {
@@ -29,7 +27,6 @@ export const listForms: RequestHandler = asyncHandler(
     if (published !== undefined) {
       whereClause.published = published === "true";
     }
-    // 3. Fetch data and count in parallel
     const parsedSkip = req.query.skip ? parseInt(req.query.skip as string) : undefined;
     const skip = parsedSkip !== undefined && !isNaN(parsedSkip) ? parsedSkip : (page - 1) * limit;
 
@@ -90,7 +87,6 @@ export const createForm: RequestHandler = asyncHandler(
           requireEmail,
           slug,
           type,
-          // Store the full FormDefinition object as jsonb
           fields: definition,
         },
         select: {
@@ -130,7 +126,7 @@ export const getForm: RequestHandler = asyncHandler(
         id: true, title: true, description: true, iconSymbol: true,
         coverUrl: true, published: true, slug: true, type: true,
         requireEmail: true, responseCount: true, viewCount: true,
-        fields: true, // needed to parse into definition
+        fields: true, 
         createdAt: true, updatedAt: true,
       },
     });
@@ -141,8 +137,6 @@ export const getForm: RequestHandler = asyncHandler(
       return;
     }
 
-    // Parse and validate the fields JSON coming out of the DB.
-    // safeParse so a corrupt DB row doesn't crash the server.
     const definitionResult = FormDefinitionSchema.safeParse(form.fields);
     if (!definitionResult.success) {
       console.error(`Corrupt form definition for form ${form.id}:`, definitionResult.error);
@@ -173,7 +167,9 @@ export const updateForm: RequestHandler = asyncHandler(
       return;
     }
 
-    let { title, description, coverUrl, iconSymbol, requireEmail, slug, definition, type } = req.body as UpdateFormInput;
+    const { title, description, coverUrl, iconSymbol, requireEmail, slug, type } = req.body as UpdateFormInput;
+
+    let definition = req.body.definition;
 
     if (definition !== undefined) {
       const parsed = FormDefinitionSchema.safeParse(definition);
@@ -456,7 +452,6 @@ export const exportCsv: RequestHandler = asyncHandler(
       return;
     }
 
-    // Extract field labels from form definition for CSV headers
     const definition = FormDefinitionSchema.safeParse(form.fields);
     const fieldLabels: { id: string; label: string }[] = definition.success
       ? definition.data.elements.map((el: { id: string; label: string; }) => ({ id: el.id, label: el.label }))
@@ -468,7 +463,6 @@ export const exportCsv: RequestHandler = asyncHandler(
       select: { id: true, email: true, data: true, createdAt: true },
     });
 
-    // Build CSV with dynamic field columns
     const staticHeaders = [escapeCell("id"), escapeCell("email"), escapeCell("submittedAt")];
     const fieldHeaders = fieldLabels.map((f) => escapeCell(f.label));
     const header = [...staticHeaders, ...fieldHeaders].join(",");
