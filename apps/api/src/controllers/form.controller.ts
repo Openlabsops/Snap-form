@@ -167,9 +167,9 @@ export const updateForm: RequestHandler = asyncHandler(
       return;
     }
 
-    const { title, description, coverUrl, iconSymbol, requireEmail, slug, type } = req.body as UpdateFormInput;
+    const { title, description, coverUrl, iconSymbol, requireEmail, slug, type , definition: rawDefinition } = req.body as UpdateFormInput;
 
-    let definition = req.body.definition;
+    let definition = rawDefinition;
 
     if (definition !== undefined) {
       const parsed = FormDefinitionSchema.safeParse(definition);
