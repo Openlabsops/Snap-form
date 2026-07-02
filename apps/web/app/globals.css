@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "@repo/ui/globals.css";
 
-@source "../../../../packages/ui/src";
+@source "../../../packages/ui/src";
 
 @layer components {
   .inspector-input {
