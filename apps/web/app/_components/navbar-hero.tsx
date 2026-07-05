@@ -149,14 +149,6 @@ export function HeroSection() {
         <Button variant="outline" size="lg" onClick={scrollToGetStarted}>
           Get Started
         </Button>
-        <Button
-          variant="ghost"
-          size="lg"
-          render={<Link href="/dashboard" />}
-        >
-          Open Dashboard
-          <ArrowRightIcon className="w-3.5 h-3.5" />
-        </Button>
       </div>
     </section>
   );
