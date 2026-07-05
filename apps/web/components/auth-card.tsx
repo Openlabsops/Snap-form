@@ -9,8 +9,8 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { GithubIcon } from "@/component/icons/github-icon";
-import { GoogleIcon } from "@/component/icons/google-icon";
+import { GithubIcon } from "@/components/icons/github-icon";
+import { GoogleIcon } from "@/components/icons/google-icon";
 
 export function AuthCard() {
   return (
