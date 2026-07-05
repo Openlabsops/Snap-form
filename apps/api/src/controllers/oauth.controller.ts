@@ -17,23 +17,9 @@ export const oauthCallback = asyncHandler(async (req, res) => {
     typeof session.user.username === "string"
       ? session.user.username.trim()
       : "";
-
-  // Honor the callbackUrl query param threaded from the middleware redirect,
-  // falling back to the existing onboarding/dashboard routing.
-  const callbackUrl =
-    typeof req.query.callbackUrl === "string" ? req.query.callbackUrl : "";
-
-  let destination: string;
-  if (username.length === 0) {
-    destination = `${config.frontend.url}/onboarding`;
-  } else if (callbackUrl) {
-    // Only allow relative paths to prevent open-redirect attacks
-    destination = callbackUrl.startsWith("/")
-      ? `${config.frontend.url}${callbackUrl}`
-      : `${config.frontend.url}/dashboard`;
-  } else {
-    destination = `${config.frontend.url}/dashboard`;
-  }
+  const destination = username.length === 0
+    ? `${config.frontend.url}/onboarding`
+    : `${config.frontend.url}/dashboard`;
 
   res.redirect(destination);
 });
