@@ -93,7 +93,7 @@ export const createForm: RequestHandler = asyncHandler(
           id: true, title: true, description: true, iconSymbol: true,
           coverUrl: true, published: true, slug: true, type: true,
           requireEmail: true, responseCount: true, viewCount: true,
-          fields: true, createdAt: true, updatedAt: true,
+          fields: true, createdAt: true, updatedAt: true, userId: true,
         },
       });
       const definitionResult = FormDefinitionSchema.safeParse(form.fields);
@@ -127,7 +127,7 @@ export const getForm: RequestHandler = asyncHandler(
         coverUrl: true, published: true, slug: true, type: true,
         requireEmail: true, responseCount: true, viewCount: true,
         fields: true, 
-        createdAt: true, updatedAt: true,
+        createdAt: true, updatedAt: true, userId: true,
       },
     });
 
@@ -202,7 +202,7 @@ export const updateForm: RequestHandler = asyncHandler(
           id: true, title: true, description: true, iconSymbol: true,
           coverUrl: true, published: true, slug: true, type: true,
           requireEmail: true, responseCount: true, viewCount: true,
-          fields: true, createdAt: true, updatedAt: true,
+          fields: true, createdAt: true, updatedAt: true, userId: true,
         },
       });
       const definitionResult = FormDefinitionSchema.safeParse(updated.fields);

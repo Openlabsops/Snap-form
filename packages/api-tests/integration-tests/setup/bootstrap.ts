@@ -33,6 +33,14 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  const { prisma } = await import("@repo/db");
+  try {
+    await prisma.$disconnect();
+    console.log("[Test Bootstrap] Prisma disconnected successfully");
+  } catch (err) {
+    console.error("[Test Bootstrap] Prisma disconnect error:", err);
+  }
+
   return new Promise<void>((resolve, reject) => {
     if (testServer) {
       testServer.close((err) => {
