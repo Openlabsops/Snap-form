@@ -1,6 +1,7 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@repo/db";
 import { Request, Response, RequestHandler } from "express";
 import { asyncHandler } from "../utils/async-handler";
+import { isPrismaErrorCode } from "../utils/prisma";
 import { FormDefinitionSchema } from "@repo/types";
 import { CreateFormInput, UpdateFormInput } from "../lib/form-schemas";
 import prisma from "../lib/db";
@@ -103,7 +104,7 @@ export const createForm: RequestHandler = asyncHandler(
         success: true, data: { ...formWithoutFields, definition: definitionResult.success ? definitionResult.data : form.fields }
       });
     } catch (err: unknown) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      if (isPrismaErrorCode(err, "P2002")) {
         res.status(409).json({ success: false, message: "A form with this slug already exists" });
         return;
       }
@@ -126,7 +127,7 @@ export const getForm: RequestHandler = asyncHandler(
         id: true, title: true, description: true, iconSymbol: true,
         coverUrl: true, published: true, slug: true, type: true,
         requireEmail: true, responseCount: true, viewCount: true,
-        fields: true, 
+        fields: true,
         createdAt: true, updatedAt: true, userId: true,
       },
     });
@@ -167,7 +168,7 @@ export const updateForm: RequestHandler = asyncHandler(
       return;
     }
 
-    const { title, description, coverUrl, iconSymbol, requireEmail, slug, type , definition: rawDefinition } = req.body as UpdateFormInput;
+    const { title, description, coverUrl, iconSymbol, requireEmail, slug, type, definition: rawDefinition } = req.body as UpdateFormInput;
 
     let definition = rawDefinition;
 
@@ -215,15 +216,13 @@ export const updateForm: RequestHandler = asyncHandler(
         }
       });
     } catch (err: unknown) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError) {
-        if (err.code === "P2002") {
-          res.status(409).json({ success: false, message: "A form with this slug already exists" });
-          return;
-        }
-        if (err.code === "P2025") {
-          res.status(404).json({ success: false, message: "Form not found" });
-          return;
-        }
+      if (isPrismaErrorCode(err, "P2002")) {
+        res.status(409).json({ success: false, message: "A form with this slug already exists" });
+        return;
+      }
+      if (isPrismaErrorCode(err, "P2025")) {
+        res.status(404).json({ success: false, message: "Form not found" });
+        return;
       }
       throw err;
     }
@@ -406,7 +405,7 @@ export const disconnectGoogleSheets: RequestHandler = asyncHandler(
         where: { formId_provider: { formId: form.id, provider: "GOOGLE_SHEETS" } },
       });
     } catch (err: unknown) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2025") {
+      if (isPrismaErrorCode(err, "P2025")) {
         res.status(404).json({ success: false, message: "No Google Sheets integration found" });
         return;
       }
