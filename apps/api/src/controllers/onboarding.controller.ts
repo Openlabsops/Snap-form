@@ -2,6 +2,7 @@ import { Request, Response, RequestHandler } from "express";
 import { asyncHandler } from "../utils/async-handler";
 import { OnboardingSchema } from "../lib/user-schemas";
 import prisma from "../lib/db";
+import { isPrismaErrorCode } from "@/utils/prisma";
 
 export const completeOnboarding: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -48,12 +49,11 @@ export const completeOnboarding: RequestHandler = asyncHandler(
       res.status(200).json({ success: true, user: updated });
     } catch (error) {
       // Unique constraint on username — can happen under concurrent requests
-      const err = error as { code?: string };
-      if (err.code === "P2002") {
+      if (isPrismaErrorCode(error, "P2002")) {
         res.status(409).json({ success: false, message: "Username is already taken" });
         return;
       }
-      throw err;
+      throw error;
     }
   }
 );

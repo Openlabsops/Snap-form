@@ -1,6 +1,7 @@
 import { Prisma } from "@repo/db";
 import { Request, Response, RequestHandler } from "express";
 import { asyncHandler } from "../utils/async-handler";
+import { isPrismaErrorCode } from "../utils/prisma";
 import { FormDefinitionSchema } from "@repo/types";
 import { CreateFormInput, UpdateFormInput } from "../lib/form-schemas";
 import prisma from "../lib/db";
@@ -103,7 +104,7 @@ export const createForm: RequestHandler = asyncHandler(
         success: true, data: { ...formWithoutFields, definition: definitionResult.success ? definitionResult.data : form.fields }
       });
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      if (isPrismaErrorCode(err, "P2002")) {
         res.status(409).json({ success: false, message: "A form with this slug already exists" });
         return;
       }
@@ -215,11 +216,11 @@ export const updateForm: RequestHandler = asyncHandler(
         }
       });
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "code" in err && err.code === "P2002") {
+      if (isPrismaErrorCode(err, "P2002")) {
         res.status(409).json({ success: false, message: "A form with this slug already exists" });
         return;
       }
-      if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
+      if (isPrismaErrorCode(err, "P2025")) {
         res.status(404).json({ success: false, message: "Form not found" });
         return;
       }
@@ -404,7 +405,7 @@ export const disconnectGoogleSheets: RequestHandler = asyncHandler(
         where: { formId_provider: { formId: form.id, provider: "GOOGLE_SHEETS" } },
       });
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "code" in err && err.code === "P2025") {
+      if (isPrismaErrorCode(err, "P2025")) {
         res.status(404).json({ success: false, message: "No Google Sheets integration found" });
         return;
       }
