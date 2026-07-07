@@ -2,8 +2,9 @@ import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../lib/auth";
 import { config } from "../lib/env";
 import { asyncHandler } from "../utils/async-handler";
+import { RequestHandler } from "express";
 
-export const oauthCallback = asyncHandler(async (req, res) => {
+export const oauthCallback: RequestHandler = asyncHandler(async (req, res) => {
   const session = await auth.api.getSession({
     headers: fromNodeHeaders(req.headers),
   });

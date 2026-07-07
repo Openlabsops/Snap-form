@@ -46,9 +46,10 @@ export const completeOnboarding: RequestHandler = asyncHandler(
       });
 
       res.status(200).json({ success: true, user: updated });
-    } catch (err) {
+    } catch (error) {
       // Unique constraint on username — can happen under concurrent requests
-      if (err?.code === "P2002") {
+      const err = error as { code?: string };
+      if (err.code === "P2002") {
         res.status(409).json({ success: false, message: "Username is already taken" });
         return;
       }

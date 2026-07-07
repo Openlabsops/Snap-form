@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@repo/db";
 import { Request, Response, RequestHandler } from "express";
 import { asyncHandler } from "../utils/async-handler";
 import prisma from "../lib/db";
