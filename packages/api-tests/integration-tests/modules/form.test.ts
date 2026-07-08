@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { createAuthenticatedClient, createAnonymousClient } from "../setup/auth";
 import { cleanDb } from "../setup/db";
 import { prisma } from "@repo/db";
-import crypto from "crypto";
+import { randomUUID } from "crypto";
 
 describe("Forms API", () => {
   beforeEach(async () => {
@@ -88,8 +88,8 @@ describe("Forms API", () => {
     it("should safely update the JSON definition via PATCH without wiping out other fields", async () => {
       const { client } = await createAuthenticatedClient();
       
-      const q1Id = crypto.randomUUID();
-      const q2Id = crypto.randomUUID();
+      const q1Id = randomUUID();
+      const q2Id = randomUUID();
 
       // 1. Create initial form
       const createResponse = await client.post("/api/v1/forms", {
@@ -120,9 +120,10 @@ describe("Forms API", () => {
         where: { id: formId },
       });
       
-      expect(dbForm?.title).toBe("Initial Form");
-      const dbDefinition = dbForm?.fields as any;
-      expect(dbDefinition.elements[0].id).toBe(q2Id);
+      expect(dbForm).not.toBeNull();
+      expect(dbForm!.title).toBe("Initial Form");
+      const dbDefinition = dbForm!.fields as { elements?: Array<{ id: string }> };
+      expect(dbDefinition.elements?.[0]?.id).toBe(q2Id);
     });
 
     it("should return only forms owned by the authenticated user", async () => {
