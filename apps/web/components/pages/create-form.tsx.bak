@@ -34,9 +34,10 @@ import {
   Circle,
   CircleDot,
   Square,
+  SquareCheck,
 } from "lucide-react";
 
-/* -- Types --------------------------------------------------------- */
+/* ── Types ───────────────────────────────────────────────────────── */
 
 type FormFieldType =
   | "textInput"
@@ -76,7 +77,7 @@ type ChatMessage = {
 
 type FormType = "scroll" | "step" | "chat";
 
-/* -- Field Type Metadata ------------------------------------------- */
+/* ── Field Type Metadata ─────────────────────────────────────────── */
 
 const FIELD_TYPE_OPTIONS = [
   { value: "textInput" as const, label: "Text Input", icon: Type },
@@ -125,7 +126,7 @@ function createField(type: FormFieldType): FormField {
   };
 }
 
-/* -- Mock Chat Data ------------------------------------------------ */
+/* ── Mock Chat Data ──────────────────────────────────────────────── */
 
 const INITIAL_CHAT: ChatMessage[] = [
   {
@@ -135,7 +136,7 @@ const INITIAL_CHAT: ChatMessage[] = [
   },
 ];
 
-/* -- Snippet Palette Item (Left Panel — draggable) ----------------- */
+/* ── Snippet Palette Item (Left Panel — draggable) ───────────────── */
 
 function SnippetItem({
   type,
@@ -164,7 +165,7 @@ function SnippetItem({
   );
 }
 
-/* -- Type-Specific Field Preview (inside Canvas Card) -------------- */
+/* ── Type-Specific Field Preview (inside Canvas Card) ────────────── */
 
 function FieldPreview({ field }: { field: FormField }) {
   const [rating, setRating] = useState(0);
@@ -302,7 +303,7 @@ function FieldPreview({ field }: { field: FormField }) {
   }
 }
 
-/* -- Type-Specific Edit Settings (inside expanded config) ---------- */
+/* ── Type-Specific Edit Settings (inside expanded config) ────────── */
 
 function FieldEditSettings({
   field,
@@ -335,7 +336,7 @@ function FieldEditSettings({
 
   return (
     <>
-      {/* -- Common Settings: Label + Placeholder -- */}
+      {/* ── Common Settings: Label + Placeholder ── */}
       <div className="flex flex-col gap-1.5">
         <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Label
@@ -363,7 +364,7 @@ function FieldEditSettings({
         />
       </div>
 
-      {/* -- Type-Specific Settings -- */}
+      {/* ── Type-Specific Settings ── */}
       {field.type === "textInput" && (
         <div className="flex flex-col gap-1.5">
           <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -476,7 +477,7 @@ function FieldEditSettings({
         </div>
       )}
 
-      {/* -- Required Toggle -- */}
+      {/* ── Required Toggle ── */}
       <div className="flex items-center gap-3 mt-1 pt-3 border-t border-border">
         <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
           <Checkbox
@@ -492,7 +493,7 @@ function FieldEditSettings({
   );
 }
 
-/* -- Canvas Field Card (Right Panel — Editable, draggable) --------- */
+/* ── Canvas Field Card (Right Panel — Editable, draggable) ───────── */
 
 function CanvasFieldCard({
   field,
@@ -663,7 +664,7 @@ function CanvasFieldCard({
   );
 }
 
-/* -- Chat Message Bubble ------------------------------------------- */
+/* ── Chat Message Bubble ─────────────────────────────────────────── */
 
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isAI = message.role === "ai";
@@ -704,7 +705,7 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-/* -- Main Create Form Component ------------------------------------ */
+/* ── Main Create Form Component ──────────────────────────────────── */
 
 export function CreateFormPage() {
   const [mode, setMode] = useState<"chat" | "manual">("manual");
@@ -720,13 +721,13 @@ export function CreateFormPage() {
   );
   const [dropHighlight, setDropHighlight] = useState(false);
 
-  /* -- Refs for timeout cleanup ----------------------------------- */
+  /* ── Refs for timeout cleanup ─────────────────────────────────── */
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const publishTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const dragIndexRef = useRef<number | null>(null);
 
-  /* -- Cleanup on unmount ---------------------------------------- */
+  /* ── Cleanup on unmount ──────────────────────────────────────── */
   useEffect(() => {
     return () => {
       if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
@@ -734,7 +735,7 @@ export function CreateFormPage() {
     };
   }, []);
 
-  /* -- Auto-scroll chat to bottom -------------------------------- */
+  /* ── Auto-scroll chat to bottom ──────────────────────────────── */
   useEffect(() => {
     chatScrollRef.current?.scrollTo({
       top: chatScrollRef.current.scrollHeight,
@@ -742,7 +743,7 @@ export function CreateFormPage() {
     });
   }, [chatMessages]);
 
-  /* -- Field Operations ------------------------------------------ */
+  /* ── Field Operations ────────────────────────────────────────── */
 
   const updateField = useCallback(
     (id: string, updates: Partial<FormField>) => {
@@ -784,7 +785,7 @@ export function CreateFormPage() {
     setExpandedFieldId((prev) => (prev === id ? null : id));
   }, []);
 
-  /* -- Native HTML5 Drag & Drop — Canvas handlers ---------------- */
+  /* ── Native HTML5 Drag & Drop — Canvas handlers ──────────────── */
 
   /** Drop snippet on the canvas background (appends to end) */
   const handleCanvasDrop = useCallback(
@@ -854,7 +855,7 @@ export function CreateFormPage() {
     []
   );
 
-  /* -- Chat Operations ------------------------------------------- */
+  /* ── Chat Operations ─────────────────────────────────────────── */
 
   const sendChatMessage = useCallback(() => {
     if (!chatInput.trim()) return;
@@ -879,7 +880,7 @@ export function CreateFormPage() {
     }, 1200);
   }, [chatInput]);
 
-  /* -- Mock Save ------------------------------------------------- */
+  /* ── Mock Save ───────────────────────────────────────────────── */
 
   const handlePublish = useCallback(() => {
     publishTimersRef.current.forEach(clearTimeout);
@@ -895,7 +896,7 @@ export function CreateFormPage() {
 
   return (
     <div className="bg-background text-foreground h-screen flex flex-col overflow-hidden">
-      {/* --- Top Navigation ---------------------------------------- */}
+      {/* ─── Top Navigation ──────────────────────────────────────── */}
       <nav className="border-b border-border bg-background shrink-0 z-10">
         <div className="flex justify-between items-center w-full h-14 px-6 lg:px-8 max-w-[1440px] mx-auto">
           <Link
@@ -918,9 +919,9 @@ export function CreateFormPage() {
         </div>
       </nav>
 
-      {/* --- Main Workspace (Split Screen) ------------------------- */}
+      {/* ─── Main Workspace (Split Screen) ───────────────────────── */}
       <main className="flex-1 flex overflow-hidden">
-        {/* -- Left Panel: Snippet Palette ------------------------- */}
+        {/* ── Left Panel: Snippet Palette ───────────────────────── */}
         <aside className="w-full md:w-[320px] border-r border-border bg-background flex flex-col shrink-0 h-full">
           {/* Tab Switcher */}
           <div className="p-4 border-b border-border shrink-0">
@@ -1056,7 +1057,7 @@ export function CreateFormPage() {
           </div>
         </aside>
 
-        {/* -- Right Panel: Editing Canvas ------------------------- */}
+        {/* ── Right Panel: Editing Canvas ───────────────────────── */}
         <section className="flex-1 bg-accent/20 overflow-y-auto hidden md:flex flex-col">
           <div className="flex-1 flex justify-center p-8">
             <div className="w-full max-w-2xl flex flex-col gap-6">
