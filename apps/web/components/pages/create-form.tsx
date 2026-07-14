@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Wrench,
   Type,
+  Hash,
   Mail,
   Copy,
   Trash2,
@@ -23,28 +24,29 @@ import {
   ScrollText,
   ListOrdered,
   MessageCircle,
-  Phone,
-  Calendar,
   Star,
-  AlignLeft,
-  Heading,
   ChevronUp,
   SquareCheck,
+  Plus,
+  X,
+  CircleDot,
 } from "lucide-react";
 
 /* ── Types ───────────────────────────────────────────────────────── */
 
 type FormFieldType =
   | "textInput"
-  | "textarea"
+  | "numberInput"
   | "email"
-  | "phone"
   | "dropdown"
   | "multipleChoice"
   | "checkbox"
-  | "datePicker"
-  | "rating"
-  | "heading";
+  | "rating";
+
+type FieldOption = {
+  id: string;
+  label: string;
+};
 
 type FormField = {
   id: string;
@@ -53,6 +55,14 @@ type FormField = {
   placeholder: string;
   required: boolean;
   validateFormat: boolean;
+  /** Options for dropdown, multipleChoice, checkbox */
+  options: FieldOption[];
+  /** Max rating for rating type */
+  max: number;
+  /** Min value for number type */
+  min: number;
+  /** Step for number type */
+  step: number;
 };
 
 type ChatMessage = {
@@ -67,16 +77,13 @@ type FormType = "scroll" | "step" | "chat";
 /* ── Field Type Metadata ─────────────────────────────────────────── */
 
 const FIELD_TYPE_OPTIONS = [
-  { value: "textInput" as const, label: "Short Text", icon: Type },
-  { value: "textarea" as const, label: "Long Text", icon: AlignLeft },
-  { value: "email" as const, label: "Email", icon: Mail },
-  { value: "phone" as const, label: "Phone", icon: Phone },
-  { value: "dropdown" as const, label: "Dropdown", icon: ChevronDown },
-  { value: "multipleChoice" as const, label: "Multiple Choice", icon: ListOrdered },
+  { value: "textInput" as const, label: "Text Input", icon: Type },
+  { value: "numberInput" as const, label: "Number Input", icon: Hash },
+  { value: "email" as const, label: "Email Input", icon: Mail },
+  { value: "dropdown" as const, label: "Dropdown / Select", icon: ChevronDown },
   { value: "checkbox" as const, label: "Checkbox", icon: SquareCheck },
-  { value: "datePicker" as const, label: "Date", icon: Calendar },
-  { value: "rating" as const, label: "Rating", icon: Star },
-  { value: "heading" as const, label: "Heading", icon: Heading },
+  { value: "multipleChoice" as const, label: "Multiple Choice", icon: CircleDot },
+  { value: "rating" as const, label: "Rating / Scale", icon: Star },
 ] as const;
 
 const FIELD_ICON_MAP = Object.fromEntries(
@@ -89,14 +96,36 @@ function getFieldIcon(type: FormFieldType) {
 
 function createField(type: FormFieldType): FormField {
   const meta = FIELD_TYPE_OPTIONS.find((o) => o.value === type);
-  return {
+  const base: FormField = {
     id: `field-${crypto.randomUUID()}`,
     type,
     label: meta?.label ?? "New Field",
-    placeholder: type === "heading" ? "" : "Enter value...",
+    placeholder: "Enter value...",
     required: false,
     validateFormat: false,
+    options: [],
+    max: 5,
+    min: 0,
+    step: 1,
   };
+
+  // Seed default options for types that need them
+  if (type === "dropdown" || type === "multipleChoice" || type === "checkbox") {
+    base.options = [
+      { id: crypto.randomUUID(), label: "Option 1" },
+      { id: crypto.randomUUID(), label: "Option 2" },
+    ];
+  }
+
+  // Sensible defaults
+  if (type === "email") {
+    base.placeholder = "you@example.com";
+  }
+  if (type === "dropdown") {
+    base.placeholder = "Select an option…";
+  }
+
+  return base;
 }
 
 /* ── Mock Chat Data ──────────────────────────────────────────────── */
@@ -108,6 +137,246 @@ const INITIAL_CHAT: ChatMessage[] = [
     content: "Hi! What kind of form do you want to build today?",
   },
 ];
+
+/* ── Options Editor (shared for Dropdown, Checkbox, Multiple Choice) ─ */
+
+function OptionsEditor({
+  options,
+  onUpdate,
+}: {
+  options: FieldOption[];
+  onUpdate: (options: FieldOption[]) => void;
+}) {
+  const addOption = () => {
+    onUpdate([
+      ...options,
+      { id: crypto.randomUUID(), label: `Option ${options.length + 1}` },
+    ]);
+  };
+
+  const removeOption = (id: string) => {
+    if (options.length <= 1) return;
+    onUpdate(options.filter((o) => o.id !== id));
+  };
+
+  const updateOptionLabel = (id: string, label: string) => {
+    onUpdate(options.map((o) => (o.id === id ? { ...o, label } : o)));
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Options
+      </Label>
+      <div className="flex flex-col gap-1.5">
+        {options.map((option, idx) => (
+          <div key={option.id} className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-5 shrink-0 text-right">
+              {idx + 1}.
+            </span>
+            <input
+              className="flex-1 border border-border bg-background text-sm p-1.5 outline-none focus:border-foreground transition-colors rounded-md"
+              type="text"
+              value={option.label}
+              onChange={(e) => updateOptionLabel(option.id, e.target.value)}
+              placeholder={`Option ${idx + 1}`}
+            />
+            <button
+              onClick={() => removeOption(option.id)}
+              disabled={options.length <= 1}
+              className="p-1 text-muted-foreground hover:text-destructive rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label={`Remove option ${idx + 1}`}
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={addOption}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1 self-start"
+      >
+        <Plus className="size-3.5" />
+        Add option
+      </button>
+    </div>
+  );
+}
+
+/* ── Edit Settings Panel (type-specific config) ──────────────────── */
+
+function EditSettingsPanel({
+  field,
+  onUpdate,
+}: {
+  field: FormField;
+  onUpdate: (id: string, updates: Partial<FormField>) => void;
+}) {
+  return (
+    <div className="px-4 pb-4 flex flex-col gap-3 border-t border-border pt-3">
+      {/* Field Type */}
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Field Type
+        </Label>
+        <div className="relative">
+          <select
+            className="w-full border border-border bg-background text-sm p-2 pr-8 outline-none focus:border-foreground transition-colors rounded-md appearance-none"
+            value={field.type}
+            onChange={(e) =>
+              onUpdate(field.id, { type: e.target.value as FormFieldType })
+            }
+          >
+            {FIELD_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        </div>
+      </div>
+
+      {/* Label — all types */}
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Label
+        </Label>
+        <input
+          className="w-full border border-border bg-background text-sm p-2 outline-none focus:border-foreground transition-colors rounded-md"
+          type="text"
+          value={field.label}
+          onChange={(e) => onUpdate(field.id, { label: e.target.value })}
+        />
+      </div>
+
+      {/* Placeholder — textInput, numberInput, email, dropdown */}
+      {(field.type === "textInput" ||
+        field.type === "numberInput" ||
+        field.type === "email" ||
+        field.type === "dropdown") && (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Placeholder
+          </Label>
+          <input
+            className="w-full border border-border bg-background text-sm p-2 outline-none focus:border-foreground transition-colors rounded-md text-muted-foreground"
+            type="text"
+            value={field.placeholder}
+            onChange={(e) =>
+              onUpdate(field.id, { placeholder: e.target.value })
+            }
+          />
+        </div>
+      )}
+
+      {/* Number-specific: Min, Max, Step */}
+      {field.type === "numberInput" && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Min
+            </Label>
+            <input
+              className="w-full border border-border bg-background text-sm p-2 outline-none focus:border-foreground transition-colors rounded-md"
+              type="number"
+              value={field.min}
+              onChange={(e) =>
+                onUpdate(field.id, { min: Number(e.target.value) })
+              }
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Max
+            </Label>
+            <input
+              className="w-full border border-border bg-background text-sm p-2 outline-none focus:border-foreground transition-colors rounded-md"
+              type="number"
+              value={field.max}
+              onChange={(e) =>
+                onUpdate(field.id, { max: Number(e.target.value) })
+              }
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Step
+            </Label>
+            <input
+              className="w-full border border-border bg-background text-sm p-2 outline-none focus:border-foreground transition-colors rounded-md"
+              type="number"
+              value={field.step}
+              min={1}
+              onChange={(e) =>
+                onUpdate(field.id, { step: Number(e.target.value) })
+              }
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Rating-specific: Max stars */}
+      {field.type === "rating" && (
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Max Stars
+          </Label>
+          <div className="relative">
+            <select
+              className="w-full border border-border bg-background text-sm p-2 pr-8 outline-none focus:border-foreground transition-colors rounded-md appearance-none"
+              value={field.max}
+              onChange={(e) =>
+                onUpdate(field.id, { max: Number(e.target.value) })
+              }
+            >
+              {Array.from({ length: 9 }, (_, i) => i + 2).map((n) => (
+                <option key={n} value={n}>
+                  {n} stars
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          </div>
+        </div>
+      )}
+
+      {/* Options editor — dropdown, multipleChoice, checkbox */}
+      {(field.type === "dropdown" ||
+        field.type === "multipleChoice" ||
+        field.type === "checkbox") && (
+        <OptionsEditor
+          options={field.options}
+          onUpdate={(options) => onUpdate(field.id, { options })}
+        />
+      )}
+
+      {/* Validation toggles */}
+      <div className="flex items-center gap-4 mt-1">
+        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+          <Checkbox
+            checked={field.required}
+            onCheckedChange={(checked) =>
+              onUpdate(field.id, { required: !!checked })
+            }
+          />
+          Required
+        </label>
+        {field.type === "email" && (
+          <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+            <Checkbox
+              checked={field.validateFormat}
+              onCheckedChange={(checked) =>
+                onUpdate(field.id, { validateFormat: !!checked })
+              }
+            />
+            Validate Format
+          </label>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /* ── Snippet Palette Item (Left Panel — draggable) ───────────────── */
 
@@ -238,7 +507,7 @@ function CanvasFieldCard({
         </div>
       </div>
 
-      {/* Expanded Config (editing zone) */}
+      {/* Expanded Edit Settings */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -248,84 +517,7 @@ function CanvasFieldCard({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 flex flex-col gap-3 border-t border-border pt-3">
-              {/* Field Type */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Field Type
-                </Label>
-                <div className="relative">
-                  <select
-                    className="w-full border border-border bg-background text-sm p-2 pr-8 outline-none focus:border-foreground transition-colors rounded-md appearance-none"
-                    value={field.type}
-                    onChange={(e) =>
-                      onUpdate(field.id, { type: e.target.value as FormFieldType })
-                    }
-                  >
-                    {FIELD_TYPE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Label */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Label
-                </Label>
-                <input
-                  className="w-full border border-border bg-background text-sm p-2 outline-none focus:border-foreground transition-colors rounded-md"
-                  type="text"
-                  value={field.label}
-                  onChange={(e) => onUpdate(field.id, { label: e.target.value })}
-                />
-              </div>
-
-              {/* Placeholder */}
-              {field.type !== "heading" && (
-                <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Placeholder
-                  </Label>
-                  <input
-                    className="w-full border border-border bg-background text-sm p-2 outline-none focus:border-foreground transition-colors rounded-md text-muted-foreground"
-                    type="text"
-                    value={field.placeholder}
-                    onChange={(e) =>
-                      onUpdate(field.id, { placeholder: e.target.value })
-                    }
-                  />
-                </div>
-              )}
-
-              {/* Validation */}
-              <div className="flex items-center gap-4 mt-1">
-                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                  <Checkbox
-                    checked={field.required}
-                    onCheckedChange={(checked) =>
-                      onUpdate(field.id, { required: !!checked })
-                    }
-                  />
-                  Required
-                </label>
-                {(field.type === "email" || field.type === "phone") && (
-                  <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                    <Checkbox
-                      checked={field.validateFormat}
-                      onCheckedChange={(checked) =>
-                        onUpdate(field.id, { validateFormat: !!checked })
-                      }
-                    />
-                    Validate Format
-                  </label>
-                )}
-              </div>
-            </div>
+            <EditSettingsPanel field={field} onUpdate={onUpdate} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -430,6 +622,7 @@ export function CreateFormPage() {
         ...prev[idx],
         id: `field-${crypto.randomUUID()}`,
         label: `${prev[idx].label} (Copy)`,
+        options: prev[idx].options.map((o) => ({ ...o, id: crypto.randomUUID() })),
       };
       const next = [...prev];
       next.splice(idx + 1, 0, clone);

@@ -1,16 +1,27 @@
 import type {
   TextInputElement,
-  TextareaElement,
   RatingElement,
   MultipleChoiceElement,
   CheckboxElement,
   DropdownElement,
   EmailElement,
-  PhoneElement,
-  DatePickerElement,
-  HeadingElement,
-  ParagraphElement,
 } from "@repo/types";
+
+// ============================================
+// LOCAL ELEMENT TYPES (not in @repo/types)
+// ============================================
+
+export type NumberInputElement = {
+  id: string;
+  type: "numberInput";
+  label: string;
+  description?: string;
+  required: boolean;
+  placeholder?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+};
 
 // ============================================
 // SHARED PROP SHAPE
@@ -27,13 +38,9 @@ export type SnippetProps<T, V = string | number | boolean | string[] | null> = {
 };
 
 export type TextInputSnippetProps = SnippetProps<TextInputElement, string>;
-export type TextareaSnippetProps = SnippetProps<TextareaElement, string>;
+export type NumberInputSnippetProps = SnippetProps<NumberInputElement, number>;
 export type RatingSnippetProps = SnippetProps<RatingElement, number>;
 export type MultipleChoiceSnippetProps = SnippetProps<MultipleChoiceElement, string>;
 export type CheckboxSnippetProps = SnippetProps<CheckboxElement, string[]>;
 export type DropdownSnippetProps = SnippetProps<DropdownElement, string>;
 export type EmailSnippetProps = SnippetProps<EmailElement, string>;
-export type PhoneSnippetProps = SnippetProps<PhoneElement, string>;
-export type DatePickerSnippetProps = SnippetProps<DatePickerElement, string>;
-export type HeadingSnippetProps = SnippetProps<HeadingElement, never>;
-export type ParagraphSnippetProps = SnippetProps<ParagraphElement, never>;
