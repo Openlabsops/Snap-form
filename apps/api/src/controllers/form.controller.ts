@@ -295,11 +295,12 @@ export const generateForm: RequestHandler = asyncHandler(
 
     const { prompt } = req.body;
 
-    const systemPrompt = buildFormGenerationPrompt(prompt);
+    const systemPrompt = buildFormGenerationPrompt();
 
     const MAX_RETRIES = 1;
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+
       try {
         const result = await aiClient.chat.send({
           chatRequest: {
@@ -311,6 +312,8 @@ export const generateForm: RequestHandler = asyncHandler(
             stream: false,
             responseFormat: { type: "json_object" },
           },
+        }, {
+          timeoutMs: 30000,
         });
 
         const raw = result.choices[0]?.message?.content;
@@ -337,10 +340,10 @@ export const generateForm: RequestHandler = asyncHandler(
         return;
       } catch (err) {
         if (attempt < MAX_RETRIES) continue;
+        console.error("AI form generation failed:", err);
         res.status(422).json({
           success: false,
           message: "AI response was invalid or failed to generate",
-          error: err instanceof Error ? err.message : String(err),
         });
         return;
       }

@@ -2,7 +2,7 @@
  * Builds the system prompt for AI form generation.
  * Instructs the LLM to return a valid FormDefinition JSON object.
  */
-export function buildFormGenerationPrompt(userPrompt: string): string {
+export function buildFormGenerationPrompt(): string {
   return `You are an expert form builder. Generate a form based on the user's request.
 
 You MUST respond with ONLY a valid JSON object matching this exact structure:
@@ -32,8 +32,5 @@ You MUST respond with ONLY a valid JSON object matching this exact structure:
 - Every element MUST have a "label" (non-empty string)
 - Use "heading" or "paragraph" elements to organise sections
 - Generate 5-12 elements appropriate for the request
-- Return ONLY the JSON — no markdown, no explanation, no code fences
-
-## User request:
-${userPrompt}`;
+- Return ONLY the JSON — no markdown, no explanation, no code fences`;
 }
