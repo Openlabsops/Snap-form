@@ -1,6 +1,8 @@
 /**
  * Builds the system prompt for AI form generation.
  * Instructs the LLM to return a valid FormDefinition JSON object.
+  * Note: Placeholder IDs ("el_1", "opt_1") are replaced server-side
+  * with real UUIDs via injectIds() after parsing.
  */
 export function buildFormGenerationPrompt(): string {
   return `You are an expert form builder. Generate a form based on the user's request.
@@ -26,9 +28,8 @@ You MUST respond with ONLY a valid JSON object matching this exact structure:
 11. "paragraph" - Static text { id, type, label, description? } (no required field)
 
 ## Rules:
-- Every element MUST have a unique "id" that is a valid UUID v4. Generate a unique, random UUID for each element (using only hexadecimal characters 0-9 and a-f).
-- Do NOT use letters beyond 'f' (such as g, h, i, j, k, l, m, etc.) in any UUID.
-- Every option inside "multipleChoice", "checkbox", and "dropdown" elements MUST also have a unique "id" in valid UUID v4 format. Generate a completely unique, random UUID for each option (do NOT use simple strings like "opt1" or "agree").
+- Every element MUST have a unique "id" — use simple placeholders like "el_1", "el_2", etc.
+- Every option inside "multipleChoice", "checkbox", and "dropdown" elements MUST also have a unique "id" — use simple placeholders like "opt_1", "opt_2", etc.
 - Every element MUST have a "label" (non-empty string)
 - Use "heading" or "paragraph" elements to organise sections
 - Generate 5-12 elements appropriate for the request
