@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, Reorder, useDragControls } from "motion/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Label } from "@repo/ui/components/ui/label";
@@ -400,6 +400,82 @@ function EditSettingsPanel({
 
 /* ── Snippet Palette Item (Left Panel — draggable) ───────────────── */
 
+function SnippetPreviewImage({ type }: { type: FormFieldType }) {
+  const commonInputClass = "h-5 w-full rounded border border-border/50 bg-background/50";
+  return (
+    <div className="w-24 h-12 rounded border border-border/50 bg-background/30 flex flex-col justify-center px-2 pointer-events-none select-none">
+      {type === "textInput" && (
+        <div className="flex flex-col gap-1.5">
+          <div className="h-1.5 w-8 rounded-sm bg-muted-foreground/30" />
+          <div className={commonInputClass} />
+        </div>
+      )}
+      {type === "numberInput" && (
+        <div className="flex flex-col gap-1.5">
+          <div className="h-1.5 w-8 rounded-sm bg-muted-foreground/30" />
+          <div className={`${commonInputClass} flex items-center justify-end px-1`}>
+            <div className="flex flex-col gap-[2px]">
+              <div className="h-1 w-2 bg-muted-foreground/40 rounded-sm" />
+              <div className="h-1 w-2 bg-muted-foreground/40 rounded-sm" />
+            </div>
+          </div>
+        </div>
+      )}
+      {type === "email" && (
+        <div className="flex flex-col gap-1.5">
+          <div className="h-1.5 w-8 rounded-sm bg-muted-foreground/30" />
+          <div className={`${commonInputClass} flex items-center px-1.5`}>
+            <span className="text-[8px] font-bold text-muted-foreground/50">@</span>
+          </div>
+        </div>
+      )}
+      {type === "dropdown" && (
+        <div className="flex flex-col gap-1.5">
+          <div className="h-1.5 w-8 rounded-sm bg-muted-foreground/30" />
+          <div className={`${commonInputClass} flex items-center justify-between px-1.5`}>
+            <div className="h-1 w-6 bg-muted-foreground/20 rounded-sm" />
+            <ChevronDown className="size-2.5 text-muted-foreground/50" />
+          </div>
+        </div>
+      )}
+      {type === "checkbox" && (
+        <div className="flex flex-col gap-1.5 mt-1">
+          <div className="flex items-center gap-2">
+            <div className="size-2.5 rounded-[2px] border border-border bg-background/80" />
+            <div className="h-1.5 w-10 rounded-sm bg-muted-foreground/30" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="size-2.5 rounded-[2px] border border-border bg-background/80" />
+            <div className="h-1.5 w-6 rounded-sm bg-muted-foreground/30" />
+          </div>
+        </div>
+      )}
+      {type === "multipleChoice" && (
+        <div className="flex flex-col gap-1.5 mt-1">
+          <div className="flex items-center gap-2">
+            <div className="size-2.5 rounded-full border border-border bg-background/80" />
+            <div className="h-1.5 w-10 rounded-sm bg-muted-foreground/30" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="size-2.5 rounded-full border border-border bg-background/80" />
+            <div className="h-1.5 w-6 rounded-sm bg-muted-foreground/30" />
+          </div>
+        </div>
+      )}
+      {type === "rating" && (
+        <div className="flex flex-col gap-1.5">
+          <div className="h-1.5 w-8 rounded-sm bg-muted-foreground/30" />
+          <div className="flex gap-0.5">
+            <Star className="size-3.5 text-muted-foreground/30 fill-muted-foreground/30" />
+            <Star className="size-3.5 text-muted-foreground/30 fill-muted-foreground/30" />
+            <Star className="size-3.5 text-muted-foreground/30 fill-muted-foreground/30" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SnippetItem({
   type,
   label,
@@ -418,11 +494,16 @@ function SnippetItem({
     <div
       draggable
       onDragStart={handleDragStart}
-      className="flex items-center gap-3 px-3 py-2.5 border border-border rounded-lg cursor-grab text-sm bg-background text-foreground hover:border-foreground/40 hover:bg-muted/50 transition-all select-none active:scale-95 active:shadow-lg active:border-foreground"
+      className="flex flex-col border border-border rounded-lg cursor-grab overflow-hidden bg-background hover:border-foreground/40 hover:bg-muted/50 transition-all select-none active:scale-95 active:shadow-lg active:border-foreground group"
     >
-      <Icon className="size-4 shrink-0" />
-      <span className="font-medium">{label}</span>
-      <GripVertical className="size-3.5 ml-auto text-muted-foreground" />
+      <div className="p-3 border-b border-border/50 bg-muted/10 flex justify-center group-hover:bg-muted/30 transition-colors">
+        <SnippetPreviewImage type={type} />
+      </div>
+      <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-foreground">
+        <Icon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="font-medium truncate">{label}</span>
+        <GripVertical className="size-3.5 ml-auto text-muted-foreground/40 shrink-0" />
+      </div>
     </div>
   );
 }
@@ -432,57 +513,54 @@ function SnippetItem({
 function CanvasFieldCard({
   field,
   index,
+  totalFields,
   onUpdate,
   onDuplicate,
   onDelete,
   isExpanded,
   onToggleExpand,
-  onReorderDragStart,
-  onReorderDragOver,
-  onReorderDrop,
+  onMoveField,
   onSnippetDropOnCard,
 }: {
   field: FormField;
   index: number;
+  totalFields: number;
   onUpdate: (id: string, updates: Partial<FormField>) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
-  onReorderDragStart: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
-  onReorderDragOver: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
-  onReorderDrop: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
+  onMoveField: (fromIndex: number, toIndex: number) => void;
   onSnippetDropOnCard: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
 }) {
   const IconComponent = getFieldIcon(field.type);
+  const dragControls = useDragControls();
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    // Accept both reorder and snippet drops
     const hasSnippet = e.dataTransfer.types.includes("application/snippet-type");
-    e.dataTransfer.dropEffect = hasSnippet ? "copy" : "move";
+    if (hasSnippet) {
+      e.dataTransfer.dropEffect = "copy";
+    }
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     const snippetType = e.dataTransfer.getData("application/snippet-type");
     if (snippetType) {
-      // Snippet from palette — insert above or below based on cursor position
       e.preventDefault();
       e.stopPropagation();
       onSnippetDropOnCard(e, index);
-    } else {
-      // Reorder within canvas
-      onReorderDrop(e, index);
     }
   }
 
   return (
-    <div
-      draggable
-      onDragStart={(e) => onReorderDragStart(e, index)}
+    <Reorder.Item
+      value={field}
+      dragListener={false}
+      dragControls={dragControls}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className="border border-border rounded-lg bg-background transition-all hover:border-foreground/30"
+      className="border border-border rounded-lg bg-background transition-all hover:border-foreground/30 relative"
     >
       {/* Collapsed Header (always visible) */}
       <div
@@ -490,8 +568,27 @@ function CanvasFieldCard({
         onClick={() => onToggleExpand(field.id)}
       >
         <span
-          className="cursor-grab p-0.5 text-muted-foreground hover:text-foreground"
-          aria-label="Drag to reorder"
+          role="button"
+          tabIndex={0}
+          className="cursor-grab p-0.5 text-muted-foreground hover:text-foreground touch-none"
+          aria-label={`Reorder ${field.label}, position ${index + 1} of ${totalFields}. Use arrow keys to move.`}
+          aria-roledescription="sortable"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            dragControls.start(e);
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp" && index > 0) {
+              e.preventDefault();
+              e.stopPropagation();
+              onMoveField(index, index - 1);
+            } else if (e.key === "ArrowDown" && index < totalFields - 1) {
+              e.preventDefault();
+              e.stopPropagation();
+              onMoveField(index, index + 1);
+            }
+          }}
         >
           <GripVertical className="size-4" />
         </span>
@@ -541,7 +638,7 @@ function CanvasFieldCard({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Reorder.Item>
   );
 }
 
@@ -723,44 +820,7 @@ export function CreateFormPage() {
     []
   );
 
-  /** Reorder drag — start: store source index */
-  const handleReorderDragStart = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, index: number) => {
-      dragIndexRef.current = index;
-      e.dataTransfer.setData("application/reorder", String(index));
-      e.dataTransfer.effectAllowed = "move";
-    },
-    []
-  );
 
-  /** Reorder drag — over: allow drop */
-  const handleReorderDragOver = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, _index: number) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    },
-    []
-  );
-
-  /** Reorder drag — drop: swap positions */
-  const handleReorderDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, targetIndex: number) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const sourceIndex = dragIndexRef.current;
-      if (sourceIndex === null || sourceIndex === targetIndex) return;
-
-      setFields((prev) => {
-        const next = [...prev];
-        const [removed] = next.splice(sourceIndex, 1);
-        next.splice(targetIndex, 0, removed);
-        return next;
-      });
-      dragIndexRef.current = null;
-      setSaveState("unsaved");
-    },
-    []
-  );
 
   /* ── Chat Operations ─────────────────────────────────────────── */
 
@@ -1019,22 +1079,39 @@ export function CreateFormPage() {
                   </div>
                 )}
 
-                {fields.map((field, index) => (
-                  <CanvasFieldCard
-                    key={field.id}
-                    field={field}
-                    index={index}
-                    onUpdate={updateField}
-                    onDuplicate={duplicateField}
-                    onDelete={deleteField}
-                    isExpanded={expandedFieldId === field.id}
-                    onToggleExpand={toggleExpandField}
-                    onReorderDragStart={handleReorderDragStart}
-                    onReorderDragOver={handleReorderDragOver}
-                    onReorderDrop={handleReorderDrop}
-                    onSnippetDropOnCard={handleSnippetDropOnCard}
-                  />
-                ))}
+                <Reorder.Group
+                  axis="y"
+                  values={fields}
+                  onReorder={(newFields) => {
+                    setFields(newFields);
+                    setSaveState("unsaved");
+                  }}
+                  className="w-full flex flex-col gap-3"
+                >
+                  {fields.map((field, index) => (
+                    <CanvasFieldCard
+                      key={field.id}
+                      field={field}
+                      index={index}
+                      totalFields={fields.length}
+                      onUpdate={updateField}
+                      onDuplicate={duplicateField}
+                      onDelete={deleteField}
+                      isExpanded={expandedFieldId === field.id}
+                      onToggleExpand={toggleExpandField}
+                      onMoveField={(from, to) => {
+                        setFields((prev) => {
+                          const next = [...prev];
+                          const [removed] = next.splice(from, 1);
+                          next.splice(to, 0, removed);
+                          return next;
+                        });
+                        setSaveState("unsaved");
+                      }}
+                      onSnippetDropOnCard={handleSnippetDropOnCard}
+                    />
+                  ))}
+                </Reorder.Group>
               </div>
             </div>
           </div>

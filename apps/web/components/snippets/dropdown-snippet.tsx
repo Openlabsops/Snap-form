@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -23,23 +24,37 @@ export function DropdownSnippet({
       {element.description && (
         <p className="text-xs text-muted-foreground">{element.description}</p>
       )}
-      <Select
-        value={value}
-        onValueChange={(val) => val && onChange?.(val)}
-        disabled={readOnly}
-        required={element.required}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder={element.placeholder ?? "Select an option…"} />
-        </SelectTrigger>
-        <SelectPopup>
-          {element.options.map((option) => (
-            <SelectItem key={option.id} value={option.id}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectPopup>
-      </Select>
+      {readOnly ? (
+        <div
+          id={element.id}
+          role="combobox"
+          aria-disabled="true"
+          aria-expanded="false"
+          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background opacity-50 cursor-not-allowed"
+        >
+          <span className="text-muted-foreground">
+            {element.placeholder ?? "Select an option…"}
+          </span>
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </div>
+      ) : (
+        <Select
+          value={value}
+          onValueChange={(val) => val && onChange?.(val)}
+          required={element.required}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={element.placeholder ?? "Select an option…"} />
+          </SelectTrigger>
+          <SelectPopup>
+            {element.options.map((option) => (
+              <SelectItem key={option.id} value={option.id}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectPopup>
+        </Select>
+      )}
     </div>
   );
 }
