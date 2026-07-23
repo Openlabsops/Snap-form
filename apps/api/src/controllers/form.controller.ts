@@ -7,6 +7,7 @@ import { CreateFormInput, UpdateFormInput } from "../lib/form-schemas";
 import prisma from "../lib/db";
 import { config } from "../lib/env";
 import { aiClient } from "../lib/ai/client";
+import { injectIds } from "../lib/ai/inject-ids";
 import { buildFormGenerationPrompt } from "../lib/ai/prompt";
 import { formatZodErrors } from "@/middleware/validate";
 
@@ -324,6 +325,7 @@ export const generateForm: RequestHandler = asyncHandler(
         }
 
         const parsed = JSON.parse(raw);
+        injectIds(parsed);
         const validated = FormDefinitionSchema.safeParse(parsed);
         if (validated.success) {
           res.json({ success: true, data: { definition: validated.data } });
