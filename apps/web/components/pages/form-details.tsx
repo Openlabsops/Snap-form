@@ -234,10 +234,10 @@ export function FormDetailsPage() {
                   <Badge
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 text-xs"
+                    className="gap-1.5 text-xs capitalize"
                   >
                     <span className="size-1.5 rounded-full bg-foreground inline-block" />
-                    Active
+                    {MOCK_FORM.status}
                   </Badge>
                 </div>
                 <h1 className="text-3xl font-bold text-foreground tracking-tight font-[family-name:var(--font-space-grotesk)]">
@@ -344,6 +344,7 @@ export function FormDetailsPage() {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground"
+                  aria-label="Filter responses"
                 >
                   <Filter className="size-4" />
                 </Button>
@@ -509,7 +510,11 @@ export function FormDetailsPage() {
                       <span className="text-foreground font-mono text-xs">
                         {MOCK_FORM.id}
                       </span>
-                      <button className="text-muted-foreground hover:text-foreground transition-colors">
+                      <button
+                        type="button"
+                        aria-label="Copy form ID"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
                         <Copy className="size-3" />
                       </button>
                     </div>
@@ -536,9 +541,15 @@ export function FormDetailsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="w-8 h-4 bg-foreground rounded-full relative cursor-pointer">
-                      <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-background rounded-full" />
-                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked="true"
+                      aria-label="Toggle Google Sheets integration"
+                      className="w-8 h-4 bg-foreground rounded-full relative"
+                    >
+                      <span className="absolute right-0.5 top-0.5 w-3 h-3 bg-background rounded-full" />
+                    </button>
                   </div>
 
                   {/* Webhook */}
@@ -554,9 +565,15 @@ export function FormDetailsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="w-8 h-4 bg-muted-foreground/30 rounded-full relative cursor-pointer">
-                      <div className="absolute left-0.5 top-0.5 w-3 h-3 bg-background rounded-full" />
-                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked="false"
+                      aria-label="Toggle Webhook integration"
+                      className="w-8 h-4 bg-muted-foreground/30 rounded-full relative"
+                    >
+                      <span className="absolute left-0.5 top-0.5 w-3 h-3 bg-background rounded-full" />
+                    </button>
                   </div>
                 </div>
               </div>
