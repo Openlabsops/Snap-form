@@ -531,12 +531,12 @@ function CanvasFieldCard({
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
   onMoveField: (fromIndex: number, toIndex: number) => void;
-  onSnippetDropOnCard: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
+  onSnippetDropOnCard: (e: React.DragEvent<HTMLElement>, index: number) => void;
 }) {
   const IconComponent = getFieldIcon(field.type);
   const dragControls = useDragControls();
 
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+  function handleDragOver(e: React.DragEvent<HTMLElement>) {
     e.preventDefault();
     const hasSnippet = e.dataTransfer.types.includes("application/snippet-type");
     if (hasSnippet) {
@@ -544,7 +544,7 @@ function CanvasFieldCard({
     }
   }
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+  function handleDrop(e: React.DragEvent<HTMLElement>) {
     const snippetType = e.dataTransfer.getData("application/snippet-type");
     if (snippetType) {
       e.preventDefault();
@@ -779,7 +779,7 @@ export function CreateFormPage() {
 
   /** Drop snippet on a specific card — insert above or below based on cursor Y */
   const handleSnippetDropOnCard = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, cardIndex: number) => {
+    (e: React.DragEvent<HTMLElement>, cardIndex: number) => {
       setDropHighlight(false);
       const snippetType = e.dataTransfer.getData("application/snippet-type");
       if (!snippetType) return;
