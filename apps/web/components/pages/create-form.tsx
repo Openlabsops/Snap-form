@@ -27,6 +27,7 @@ import {
   Bot,
   User,
   Upload,
+  Save,
   GripVertical,
   ChevronDown,
   ScrollText,
@@ -42,7 +43,7 @@ import {
 
 /* ── Types ───────────────────────────────────────────────────────── */
 
-type FormFieldType =
+export type FormFieldType =
   | "textInput"
   | "numberInput"
   | "email"
@@ -51,12 +52,12 @@ type FormFieldType =
   | "checkbox"
   | "rating";
 
-type FieldOption = {
+export type FieldOption = {
   id: string;
   label: string;
 };
 
-type FormField = {
+export type FormField = {
   id: string;
   type: FormFieldType;
   label: string;
@@ -685,16 +686,26 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 
 /* ── Main Create Form Component ──────────────────────────────────── */
 
-export function CreateFormPage() {
+export function CreateFormPage({
+  initialTitle,
+  initialDescription,
+  initialFields,
+  isEditMode = false,
+}: {
+  initialTitle?: string;
+  initialDescription?: string;
+  initialFields?: FormField[];
+  isEditMode?: boolean;
+} = {}) {
   const [mode, setMode] = useState<"chat" | "manual">("manual");
-  const [formTitle, setFormTitle] = useState("Untitled Form");
-  const [formDescription, setFormDescription] = useState("");
+  const [formTitle, setFormTitle] = useState(initialTitle ?? "Untitled Form");
+  const [formDescription, setFormDescription] = useState(initialDescription ?? "");
   const [formType, setFormType] = useState<FormType>("scroll");
-  const [fields, setFields] = useState<FormField[]>([]);
+  const [fields, setFields] = useState<FormField[]>(initialFields ?? []);
   const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(INITIAL_CHAT);
   const [chatInput, setChatInput] = useState("");
-  const [saveState, setSaveState] = useState<"unsaved" | "saving" | "saved">("unsaved");
+  const [saveState, setSaveState] = useState<"unsaved" | "saving" | "saved">(isEditMode ? "saved" : "unsaved");
   const [dropHighlight, setDropHighlight] = useState(false);
 
   /* ── Refs for timeout cleanup ─────────────────────────────────── */
@@ -719,6 +730,13 @@ export function CreateFormPage() {
     });
   }, [chatMessages]);
 
+  /* ── Mutation helper — cancels stale save timers ────────────── */
+  const markUnsaved = useCallback(() => {
+    publishTimersRef.current.forEach(clearTimeout);
+    publishTimersRef.current = [];
+    setSaveState("unsaved");
+  }, []);
+
   /* ── Field Operations ────────────────────────────────────────── */
 
   const updateField = useCallback(
@@ -726,7 +744,7 @@ export function CreateFormPage() {
       setFields((prev) =>
         prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
       );
-      setSaveState("unsaved");
+      markUnsaved();
     },
     []
   );
@@ -745,13 +763,13 @@ export function CreateFormPage() {
       next.splice(idx + 1, 0, clone);
       return next;
     });
-    setSaveState("unsaved");
+    markUnsaved();
   }, []);
 
   const deleteField = useCallback((id: string) => {
     setFields((prev) => prev.filter((f) => f.id !== id));
     setExpandedFieldId((prev) => (prev === id ? null : prev));
-    setSaveState("unsaved");
+    markUnsaved();
   }, []);
 
   const toggleExpandField = useCallback((id: string) => {
@@ -771,7 +789,7 @@ export function CreateFormPage() {
         const newField = createField(snippetType as FormFieldType);
         setFields((prev) => [...prev, newField]);
         setExpandedFieldId(newField.id);
-        setSaveState("unsaved");
+        markUnsaved();
       }
     },
     []
@@ -796,7 +814,7 @@ export function CreateFormPage() {
         return next;
       });
       setExpandedFieldId(newField.id);
-      setSaveState("unsaved");
+      markUnsaved();
     },
     []
   );
@@ -872,11 +890,14 @@ export function CreateFormPage() {
             <span className="text-sm text-muted-foreground hidden md:block">
               {saveState === "unsaved" && "Unsaved changes"}
               {saveState === "saving" && "Saving..."}
-              {saveState === "saved" && "✓ Published"}
+              {saveState === "saved" && (isEditMode ? "✓ Saved" : "✓ Published")}
             </span>
             <Button size="sm" onClick={handlePublish}>
-              <Upload className="size-3.5" />
-              Publish
+              {isEditMode ? (
+                <><Save className="size-3.5" /> Save Changes</>
+              ) : (
+                <><Upload className="size-3.5" /> Publish</>
+              )}
             </Button>
           </div>
         </div>
@@ -1031,7 +1052,7 @@ export function CreateFormPage() {
                   value={formTitle}
                   onChange={(e) => {
                     setFormTitle(e.target.value);
-                    setSaveState("unsaved");
+                    markUnsaved();
                   }}
                   placeholder="Form Title"
                 />
@@ -1040,7 +1061,7 @@ export function CreateFormPage() {
                   value={formDescription}
                   onChange={(e) => {
                     setFormDescription(e.target.value);
-                    setSaveState("unsaved");
+                    markUnsaved();
                   }}
                   placeholder="Add a description..."
                 />
@@ -1084,7 +1105,7 @@ export function CreateFormPage() {
                   values={fields}
                   onReorder={(newFields) => {
                     setFields(newFields);
-                    setSaveState("unsaved");
+                    markUnsaved();
                   }}
                   className="w-full flex flex-col gap-3"
                 >
@@ -1106,7 +1127,7 @@ export function CreateFormPage() {
                           next.splice(to, 0, removed);
                           return next;
                         });
-                        setSaveState("unsaved");
+                        markUnsaved();
                       }}
                       onSnippetDropOnCard={handleSnippetDropOnCard}
                     />

@@ -288,12 +288,14 @@ export function FormDetailsPage() {
                   <TooltipContent>Export raw JSON data</TooltipContent>
                 </Tooltip>
 
-                <Link href="/forms/create">
-                  <Button size="sm" className="gap-2">
-                    <Pencil className="size-4" />
-                    Edit Form
-                  </Button>
-                </Link>
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  render={<Link href={`/forms/${MOCK_FORM.id}/edit`} />}
+                >
+                  <Pencil className="size-4" />
+                  Edit Form
+                </Button>
               </div>
             </motion.div>
           </div>
