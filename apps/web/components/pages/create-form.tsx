@@ -27,6 +27,7 @@ import {
   Bot,
   User,
   Upload,
+  Save,
   GripVertical,
   ChevronDown,
   ScrollText,
@@ -42,7 +43,7 @@ import {
 
 /* ── Types ───────────────────────────────────────────────────────── */
 
-type FormFieldType =
+export type FormFieldType =
   | "textInput"
   | "numberInput"
   | "email"
@@ -51,12 +52,12 @@ type FormFieldType =
   | "checkbox"
   | "rating";
 
-type FieldOption = {
+export type FieldOption = {
   id: string;
   label: string;
 };
 
-type FormField = {
+export type FormField = {
   id: string;
   type: FormFieldType;
   label: string;
@@ -685,12 +686,22 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 
 /* ── Main Create Form Component ──────────────────────────────────── */
 
-export function CreateFormPage() {
+export function CreateFormPage({
+  initialTitle,
+  initialDescription,
+  initialFields,
+  isEditMode = false,
+}: {
+  initialTitle?: string;
+  initialDescription?: string;
+  initialFields?: FormField[];
+  isEditMode?: boolean;
+} = {}) {
   const [mode, setMode] = useState<"chat" | "manual">("manual");
-  const [formTitle, setFormTitle] = useState("Untitled Form");
-  const [formDescription, setFormDescription] = useState("");
+  const [formTitle, setFormTitle] = useState(initialTitle ?? "Untitled Form");
+  const [formDescription, setFormDescription] = useState(initialDescription ?? "");
   const [formType, setFormType] = useState<FormType>("scroll");
-  const [fields, setFields] = useState<FormField[]>([]);
+  const [fields, setFields] = useState<FormField[]>(initialFields ?? []);
   const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(INITIAL_CHAT);
   const [chatInput, setChatInput] = useState("");
@@ -872,11 +883,14 @@ export function CreateFormPage() {
             <span className="text-sm text-muted-foreground hidden md:block">
               {saveState === "unsaved" && "Unsaved changes"}
               {saveState === "saving" && "Saving..."}
-              {saveState === "saved" && "✓ Published"}
+              {saveState === "saved" && (isEditMode ? "✓ Saved" : "✓ Published")}
             </span>
             <Button size="sm" onClick={handlePublish}>
-              <Upload className="size-3.5" />
-              Publish
+              {isEditMode ? (
+                <><Save className="size-3.5" /> Save Changes</>
+              ) : (
+                <><Upload className="size-3.5" /> Publish</>
+              )}
             </Button>
           </div>
         </div>
