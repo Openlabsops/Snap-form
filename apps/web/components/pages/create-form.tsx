@@ -705,7 +705,7 @@ export function CreateFormPage({
   const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(INITIAL_CHAT);
   const [chatInput, setChatInput] = useState("");
-  const [saveState, setSaveState] = useState<"unsaved" | "saving" | "saved">("unsaved");
+  const [saveState, setSaveState] = useState<"unsaved" | "saving" | "saved">(isEditMode ? "saved" : "unsaved");
   const [dropHighlight, setDropHighlight] = useState(false);
 
   /* ── Refs for timeout cleanup ─────────────────────────────────── */
@@ -730,6 +730,13 @@ export function CreateFormPage({
     });
   }, [chatMessages]);
 
+  /* ── Mutation helper — cancels stale save timers ────────────── */
+  const markUnsaved = useCallback(() => {
+    publishTimersRef.current.forEach(clearTimeout);
+    publishTimersRef.current = [];
+    setSaveState("unsaved");
+  }, []);
+
   /* ── Field Operations ────────────────────────────────────────── */
 
   const updateField = useCallback(
@@ -737,7 +744,7 @@ export function CreateFormPage({
       setFields((prev) =>
         prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
       );
-      setSaveState("unsaved");
+      markUnsaved();
     },
     []
   );
@@ -756,13 +763,13 @@ export function CreateFormPage({
       next.splice(idx + 1, 0, clone);
       return next;
     });
-    setSaveState("unsaved");
+    markUnsaved();
   }, []);
 
   const deleteField = useCallback((id: string) => {
     setFields((prev) => prev.filter((f) => f.id !== id));
     setExpandedFieldId((prev) => (prev === id ? null : prev));
-    setSaveState("unsaved");
+    markUnsaved();
   }, []);
 
   const toggleExpandField = useCallback((id: string) => {
@@ -782,7 +789,7 @@ export function CreateFormPage({
         const newField = createField(snippetType as FormFieldType);
         setFields((prev) => [...prev, newField]);
         setExpandedFieldId(newField.id);
-        setSaveState("unsaved");
+        markUnsaved();
       }
     },
     []
@@ -807,7 +814,7 @@ export function CreateFormPage({
         return next;
       });
       setExpandedFieldId(newField.id);
-      setSaveState("unsaved");
+      markUnsaved();
     },
     []
   );
@@ -1045,7 +1052,7 @@ export function CreateFormPage({
                   value={formTitle}
                   onChange={(e) => {
                     setFormTitle(e.target.value);
-                    setSaveState("unsaved");
+                    markUnsaved();
                   }}
                   placeholder="Form Title"
                 />
@@ -1054,7 +1061,7 @@ export function CreateFormPage({
                   value={formDescription}
                   onChange={(e) => {
                     setFormDescription(e.target.value);
-                    setSaveState("unsaved");
+                    markUnsaved();
                   }}
                   placeholder="Add a description..."
                 />
@@ -1098,7 +1105,7 @@ export function CreateFormPage({
                   values={fields}
                   onReorder={(newFields) => {
                     setFields(newFields);
-                    setSaveState("unsaved");
+                    markUnsaved();
                   }}
                   className="w-full flex flex-col gap-3"
                 >
@@ -1120,7 +1127,7 @@ export function CreateFormPage({
                           next.splice(to, 0, removed);
                           return next;
                         });
-                        setSaveState("unsaved");
+                        markUnsaved();
                       }}
                       onSnippetDropOnCard={handleSnippetDropOnCard}
                     />
