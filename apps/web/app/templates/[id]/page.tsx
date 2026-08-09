@@ -1,9 +1,10 @@
 import { TemplateDetailsPage } from "@/components/pages/template-details";
 
-export default function TemplateDetails({
+export default async function TemplateDetails({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  return <TemplateDetailsPage templateId={params.id} />;
+  const { id } = await params;
+  return <TemplateDetailsPage templateId={id} />;
 }

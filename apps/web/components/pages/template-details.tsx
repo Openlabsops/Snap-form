@@ -23,23 +23,41 @@ import {
 
 /* ── Mock Data ───────────────────────────────────────────────────── */
 
-const MOCK_TEMPLATE = {
-  id: "tpl-1",
-  title: "E-Commerce Checkout Flow",
-  description:
-    "A highly optimized, multi-step checkout form designed for maximum conversion. Includes built-in field validation, address auto-complete integration ready, and stark minimalist styling that blends seamlessly into any modern storefront.",
-  rating: 4.8,
-  reviewsCount: 124,
-  author: "Snap-Form Team",
-  price: "$49",
-  license: "Commercial Use",
-  includes: "4 Steps, 18 Fields, Success State",
-  // We don't have actual images, so we use structural placeholders 
-  // that match the visual layout of the design
+const MOCK_TEMPLATES: Record<string, any> = {
+  "tpl-1": {
+    id: "tpl-1",
+    title: "E-Commerce Checkout Flow",
+    description:
+      "A highly optimized, multi-step checkout form designed for maximum conversion. Includes built-in field validation, address auto-complete integration ready, and stark minimalist styling that blends seamlessly into any modern storefront.",
+    rating: 4.8,
+    reviewsCount: 124,
+    author: "Snap-Form Team",
+    price: "$49",
+    license: "Commercial Use",
+    includes: "4 Steps, 18 Fields, Success State",
+    // We don't have actual images, so we use structural placeholders 
+    // that match the visual layout of the design
+  }
 };
 
-export function TemplateDetailsPage({ templateId }: { templateId?: string }) {
+export function TemplateDetailsPage({ templateId }: { templateId: string }) {
   const [activeTab, setActiveTab] = useState("templates");
+  
+  const template = MOCK_TEMPLATES[templateId];
+
+  if (!template) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="text-center flex flex-col items-center gap-4">
+          <h1 className="text-2xl font-bold">Template Not Found</h1>
+          <p className="text-muted-foreground">The template you are looking for does not exist.</p>
+          <Link href="/templates">
+            <Button>Back to Templates</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -94,6 +112,7 @@ export function TemplateDetailsPage({ templateId }: { templateId?: string }) {
                 <TooltipTrigger
                   render={
                     <Button
+                      aria-label="Notifications"
                       variant="ghost"
                       size="icon"
                       className="text-muted-foreground"
@@ -125,7 +144,7 @@ export function TemplateDetailsPage({ templateId }: { templateId?: string }) {
                 Templates
               </Link>
               <ChevronRight className="size-4" />
-              <span className="text-foreground">{MOCK_TEMPLATE.title}</span>
+              <span className="text-foreground">{template.title}</span>
             </nav>
 
             {/* Main Preview Image Placeholder */}
@@ -171,46 +190,50 @@ export function TemplateDetailsPage({ templateId }: { templateId?: string }) {
             {/* Header Info */}
             <div className="flex flex-col gap-4">
               <h1 className="text-3xl md:text-4xl font-bold text-foreground font-[family-name:var(--font-space-grotesk)] tracking-tight">
-                {MOCK_TEMPLATE.title}
+                {template.title}
               </h1>
               
               <div className="flex items-center gap-4 border-b border-border pb-4">
                 <div className="flex items-center text-foreground">
-                  <Star className="size-4 fill-current" />
-                  <Star className="size-4 fill-current" />
-                  <Star className="size-4 fill-current" />
-                  <Star className="size-4 fill-current" />
-                  <StarHalf className="size-4 fill-current" />
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    if (i < Math.floor(template.rating)) {
+                      return <Star key={i} className="size-4 fill-current" />;
+                    }
+                    if (i === Math.floor(template.rating) && template.rating % 1 >= 0.5) {
+                      return <StarHalf key={i} className="size-4 fill-current" />;
+                    }
+                    return <Star key={i} className="size-4 text-muted opacity-30" />;
+                  })}
                   <span className="text-sm font-medium ml-2">
-                    {MOCK_TEMPLATE.rating} ({MOCK_TEMPLATE.reviewsCount} reviews)
+                    {template.rating} ({template.reviewsCount} reviews)
                   </span>
                 </div>
                 <div className="h-4 w-px bg-border"></div>
                 <span className="text-sm font-medium text-muted-foreground">
-                  By {MOCK_TEMPLATE.author}
+                  By {template.author}
                 </span>
               </div>
             </div>
 
             {/* Description */}
             <p className="text-base text-muted-foreground leading-relaxed">
-              {MOCK_TEMPLATE.description}
+              {template.description}
             </p>
 
             {/* Details Box */}
             <div className="flex flex-col gap-4 bg-muted/20 border border-border p-6 rounded-lg">
               <div className="flex justify-between items-center border-b border-border pb-4">
                 <span className="text-sm font-semibold text-foreground">License</span>
-                <span className="text-sm text-muted-foreground">{MOCK_TEMPLATE.license}</span>
+                <span className="text-sm text-muted-foreground">{template.license}</span>
               </div>
               <div className="flex justify-between items-center border-b border-border pb-4">
                 <span className="text-sm font-semibold text-foreground">Includes</span>
-                <span className="text-sm text-muted-foreground">{MOCK_TEMPLATE.includes}</span>
+                <span className="text-sm text-muted-foreground">{template.includes}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-semibold text-foreground">Price</span>
                 <span className="text-2xl font-bold text-foreground font-[family-name:var(--font-space-grotesk)] tracking-tight">
-                  {MOCK_TEMPLATE.price}
+                  {template.price}
                 </span>
               </div>
             </div>
