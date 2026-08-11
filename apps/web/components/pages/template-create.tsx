@@ -26,6 +26,7 @@ import {
   Search,
   ImagePlus,
   Rocket,
+  Menu,
 } from "lucide-react";
 
 /* ── Mock Data ───────────────────────────────────────────────────── */
@@ -51,6 +52,13 @@ export function TemplateCreatePage() {
   const [activeTab, setActiveTab] = useState("templates");
   const [selectedFormId, setSelectedFormId] = useState<string>("form-1");
   const [pricingType, setPricingType] = useState<"free" | "commercial">("free");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const filteredForms = MOCK_FORMS.filter(form => 
+    form.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    form.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <TooltipProvider>
@@ -95,6 +103,25 @@ export function TemplateCreatePage() {
                     )}
                   </Link>
                 ))}
+              </div>
+              
+              {/* Mobile Navigation */}
+              <div className="md:hidden relative">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  aria-label="Toggle navigation menu"
+                  aria-expanded={mobileMenuOpen}
+                >
+                  <Menu className="size-5 text-foreground" />
+                </Button>
+                {mobileMenuOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-background border border-border rounded-md shadow-lg py-1 z-50 flex flex-col">
+                    <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">Dashboard</Link>
+                    <Link href="/templates" className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">Templates</Link>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -188,46 +215,61 @@ export function TemplateCreatePage() {
                     type="text" 
                     placeholder="Search your forms..." 
                     className="pl-10 h-12 text-base"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {MOCK_FORMS.map((form) => (
-                    <div
-                      key={form.id}
-                      onClick={() => setSelectedFormId(form.id)}
-                      className={`relative rounded-md p-4 cursor-pointer transition-colors border-2 ${
-                        selectedFormId === form.id
-                          ? "border-foreground bg-background"
-                          : "border-border hover:border-foreground/50 bg-background"
-                      }`}
-                    >
-                      {/* Radio dot indicator */}
-                      <div 
-                        className={`absolute top-4 right-4 w-4 h-4 rounded-full border flex items-center justify-center ${
-                          selectedFormId === form.id 
-                            ? "border-foreground bg-foreground" 
-                            : "border-muted-foreground"
+                <div 
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                  role="radiogroup"
+                  aria-label="Select form"
+                >
+                  {filteredForms.length > 0 ? (
+                    filteredForms.map((form) => (
+                      <button
+                        type="button"
+                        key={form.id}
+                        role="radio"
+                        aria-checked={selectedFormId === form.id}
+                        onClick={() => setSelectedFormId(form.id)}
+                        className={`relative rounded-md p-4 cursor-pointer transition-colors border-2 text-left w-full ${
+                          selectedFormId === form.id
+                            ? "border-foreground bg-background"
+                            : "border-border hover:border-foreground/50 bg-background"
                         }`}
                       >
-                        {selectedFormId === form.id && (
-                          <div className="w-1.5 h-1.5 bg-background rounded-full" />
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-col gap-2 pr-6">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                          {form.category}
-                        </span>
-                        <span className="text-sm font-semibold text-foreground">
-                          {form.title}
-                        </span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {form.lastEdited} • {form.fields}
-                        </span>
-                      </div>
+                        {/* Radio dot indicator */}
+                        <div 
+                          className={`absolute top-4 right-4 w-4 h-4 rounded-full border flex items-center justify-center ${
+                            selectedFormId === form.id 
+                              ? "border-foreground bg-foreground" 
+                              : "border-muted-foreground"
+                          }`}
+                        >
+                          {selectedFormId === form.id && (
+                            <div className="w-1.5 h-1.5 bg-background rounded-full" />
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 pr-6">
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                            {form.category}
+                          </span>
+                          <span className="text-sm font-semibold text-foreground">
+                            {form.title}
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate">
+                            {form.lastEdited} • {form.fields}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-8 text-center text-muted-foreground text-sm border-2 border-dashed border-border rounded-md">
+                      No matching forms found. Try a different search term.
                     </div>
-                  ))}
+                  )}
                 </div>
               </section>
 
@@ -373,6 +415,7 @@ export function TemplateCreatePage() {
                         $
                       </div>
                       <Input 
+                        key={pricingType}
                         id="price" 
                         type="number" 
                         disabled={pricingType === "free"}
