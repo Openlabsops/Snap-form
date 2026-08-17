@@ -35,6 +35,7 @@ export interface BuilderHistorySnapshot {
     selectedSnippetId: string | null;
     formTitle: string;
     formType: FormType;
+    isDirty: boolean;
 }
 
 
@@ -65,6 +66,7 @@ const takeSnapshot = (state: BuilderState): BuilderHistorySnapshot => ({
     selectedSnippetId: state.selectedSnippetId,
     formTitle: state.formTitle,
     formType: state.formType,
+    isDirty: state.isDirty,
 });
 
 const recordHistory = (state: BuilderState) => {
@@ -158,6 +160,7 @@ export const builderSlice = createSlice({
             if (shouldRecord) {
                 recordHistory(state);
             } else {
+                state.future = [];
                 state.isDirty = true;
             }
             state.snippets[index] = { ...element, ...filteredPatch } as FormElement;
@@ -214,7 +217,7 @@ export const builderSlice = createSlice({
                 state.selectedSnippetId = previous.selectedSnippetId;
                 state.formTitle = previous.formTitle;
                 state.formType = previous.formType;
-                state.isDirty = true;
+                state.isDirty = previous.isDirty;
             }
         },
 
@@ -227,7 +230,7 @@ export const builderSlice = createSlice({
                 state.selectedSnippetId = next.selectedSnippetId;
                 state.formTitle = next.formTitle;
                 state.formType = next.formType;
-                state.isDirty = true;
+                state.isDirty = next.isDirty;
             }
         },
 
