@@ -132,11 +132,28 @@ export const builderSlice = createSlice({
             }
         },
 
+        /**
+         * Apply a partial config patch to a snippet.
+         *
+         * `recordHistory` controls how the edit is treated in the history engine:
+         *
+         * - `true` (default) — a full undo snapshot is pushed before the patch is applied.
+         *   Use for discrete, intentional edits (e.g. toggling required, selecting a type).
+         *
+         * - `false` — no snapshot is pushed, so the edit is not individually undoable.
+         *   The form is still marked dirty and stale redo history is cleared, because the
+         *   content has genuinely changed. Use for continuous-input scenarios (e.g. typing
+         *   in a label field) to avoid flooding the undo stack on every keystroke.
+         *
+         * Note: a future `ephemeral` mode (no dirty flag, no redo-clear) may be added for
+         * transient UI states such as drag-ghost previews or hover highlights.
+         */
         updateSnippetConfig: (
             state,
             action: PayloadAction<{
                 id: string;
                 patch: SnippetPatch;
+                /** See reducer JSDoc for semantics. Defaults to `true`. */
                 recordHistory?: boolean;
             }>
         ) => {
