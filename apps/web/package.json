@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "bun test"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
