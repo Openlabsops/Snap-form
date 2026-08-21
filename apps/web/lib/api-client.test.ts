@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, afterEach } from "bun:test";
 import {
   AxiosError,
   type AxiosResponse,
@@ -114,5 +114,65 @@ describe("apiClient response interceptor", () => {
       .catch((e) => e);
     expect(err.message).toBe("Bad request");
     expect(err.fieldErrors).toBeUndefined();
+  });
+
+  it("rejects top-level array errors instead of creating field errors", async () => {
+    const err = await apiClient
+      .get("/array-errors", {
+        adapter: adapterFor(400, {
+          success: false,
+          message: "Bad request",
+          errors: ["Invalid request"],
+        }),
+      })
+      .catch((e) => e);
+    expect(err.message).toBe("Bad request");
+    expect(err.fieldErrors).toBeUndefined();
+  });
+});
+
+describe("apiClient 401 auth redirect", () => {
+  type FakeWindow = { location: { pathname: string; href: string } };
+
+  function mockWindow(pathname: string): FakeWindow {
+    const fake = { location: { pathname, href: "" } };
+    (globalThis as unknown as { window: FakeWindow }).window = fake;
+    return fake;
+  }
+
+  afterEach(() => {
+    delete (globalThis as unknown as { window?: unknown }).window;
+  });
+
+  const unauthorizedAdapter = () =>
+    adapterFor(401, { success: false, message: "Unauthorized" });
+
+  it("hard redirects to / from a protected route", async () => {
+    const fake = mockWindow("/dashboard");
+    await apiClient
+      .get("/private", { adapter: unauthorizedAdapter() })
+      .catch(() => {});
+    expect(fake.location.href).toBe("/");
+  });
+
+  it("does not redirect on public routes", async () => {
+    for (const path of ["/", "/onboarding"]) {
+      const fake = mockWindow(path);
+      await apiClient
+        .get("/private", { adapter: unauthorizedAdapter() })
+        .catch(() => {});
+      expect(fake.location.href).toBe("");
+    }
+  });
+
+  it("does not redirect when skipAuthRedirect is set", async () => {
+    const fake = mockWindow("/dashboard");
+    await apiClient
+      .get("/private", {
+        adapter: unauthorizedAdapter(),
+        skipAuthRedirect: true,
+      })
+      .catch(() => {});
+    expect(fake.location.href).toBe("");
   });
 });

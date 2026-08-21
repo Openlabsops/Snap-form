@@ -38,7 +38,13 @@ type ErrorData = {
 function normalizeFieldErrors(
   errors: unknown
 ): Record<string, string> | undefined {
-  if (!errors || typeof errors !== "object") return undefined;
+  if (
+    !errors ||
+    typeof errors !== "object" ||
+    Array.isArray(errors)
+  ) {
+    return undefined;
+  }
 
   const entries = Object.entries(errors);
   if (entries.length === 0) return undefined;
