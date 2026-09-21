@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios";
+import { expireClientSession } from "@/lib/auth-session";
 
 export type ApiError = {
   status: number;
@@ -20,17 +21,6 @@ export const apiClient = axios.create({
     "X-Requested-With": "XMLHttpRequest",
   },
 });
-
-const PUBLIC_ROUTES = ["/", "/onboarding"];
-const AUTH_ENTRY_ROUTE = "/";
-
-function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(
-    (route) =>
-      pathname === route ||
-      (route !== "/" && pathname.startsWith(`${route}/`))
-  );
-}
 
 type ErrorData = {
   message?: unknown;
@@ -94,10 +84,9 @@ apiClient.interceptors.response.use(
     if (
       status === 401 &&
       typeof window !== "undefined" &&
-      !error.config?.skipAuthRedirect &&
-      !isPublicRoute(window.location.pathname)
+      !error.config?.skipAuthRedirect
     ) {
-      window.location.href = AUTH_ENTRY_ROUTE;
+      expireClientSession();
     }
 
     return Promise.reject(apiError);
