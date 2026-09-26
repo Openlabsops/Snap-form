@@ -1,2 +1,2 @@
-export type { ApiResponse } from "./api-response.js";
-export * from "./form-schema.js";
+export type { ApiResponse } from "./api-response";
+export * from "./form-schema";
