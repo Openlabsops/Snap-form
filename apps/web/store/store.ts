@@ -1,8 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
+import uiReducer from "./slices/uiSlice";
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
+      ui: uiReducer,
       // Slices (like builderSlice, uiSlice) will be registered here
     },
     devTools: process.env.NODE_ENV !== "production",
