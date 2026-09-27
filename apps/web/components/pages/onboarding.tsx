@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -23,12 +23,8 @@ import {
 } from "@repo/ui/components/ui/input-group";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { ArrowRight, Check, X, Loader2 } from "lucide-react";
-
-/* ── Mock Data ───────────────────────────────────────────────────── */
-
-const TAKEN_USERNAMES = ["admin", "test", "snap-form", "snapform"];
-
-type AvailabilityStatus = "idle" | "checking" | "available" | "taken";
+import { useRouter } from "next/navigation";
+import { useCheckUsername, useOnboardingMutation, useUserProfile } from "@/hooks";
 
 /* ── Social Link Icons ───────────────────────────────────────────── */
 
@@ -74,38 +70,59 @@ function InstagramIcon({ className }: { className?: string }) {
 /* ── Onboarding Page Component ───────────────────────────────────── */
 
 export function OnboardingPage() {
+  const router = useRouter();
+  const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
-  const [status, setStatus] = useState<AvailabilityStatus>("idle");
   const [socialLinks, setSocialLinks] = useState({
     x: "",
     linkedin: "",
     instagram: "",
   });
 
-  /* Mock availability check — simulates a 600ms API call */
+  const { user: userProfile } = useUserProfile({
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (userProfile?.name && !fullName) {
+      setFullName(userProfile.name);
+    }
+  }, [userProfile?.name, fullName]);
+
+  const {
+    isAvailable,
+    isChecking,
+    validationError,
+  } = useCheckUsername(username);
+
+  const onboardingMutation = useOnboardingMutation({
+    onSuccess: () => {
+      router.push("/dashboard");
+    },
+  });
+
   function handleUsernameChange(value: string) {
     const sanitized = value.toLowerCase().replace(/[^a-z0-9_]/g, "");
     setUsername(sanitized);
-
-    if (sanitized.length === 0) {
-      setStatus("idle");
-      return;
-    }
-
-    setStatus("checking");
-
-    /* Simulate network delay */
-    setTimeout(() => {
-      if (TAKEN_USERNAMES.includes(sanitized)) {
-        setStatus("taken");
-      } else {
-        setStatus("available");
-      }
-    }, 600);
   }
 
   function handleSocialChange(key: keyof typeof socialLinks, value: string) {
     setSocialLinks((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!username || isAvailable !== true || onboardingMutation.isPending) return;
+
+    onboardingMutation.mutate({
+      fullName: fullName.trim() || undefined,
+      username,
+      socialLinks: {
+        x: socialLinks.x.trim() || undefined,
+        linkedin: socialLinks.linkedin.trim() || undefined,
+        instagram: socialLinks.instagram.trim() || undefined,
+      },
+    });
   }
 
   return (
@@ -126,150 +143,194 @@ export function OnboardingPage() {
 
           {/* Form Card */}
           <Card>
-            <CardContent className="p-6 space-y-6">
-              {/* ── Username Field ─────────────────────────── */}
-              <Field>
-                <FieldLabel htmlFor="username">Username</FieldLabel>
-                <div className="w-full relative">
+            <CardContent className="p-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* ── Error Banner ─────────────────────────── */}
+                {onboardingMutation.isError && (
+                  <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+                    {onboardingMutation.error.message ||
+                      "Failed to complete onboarding. Please try again."}
+                  </div>
+                )}
+
+                {/* ── Full Name Field ──────────────────────── */}
+                <Field>
+                  <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
                   <Input
-                    id="username"
-                    name="username"
-                    placeholder="e.g. acmecorp"
-                    value={username}
+                    id="fullName"
+                    name="fullName"
+                    placeholder="e.g. Jane Doe"
+                    value={fullName}
                     onChange={(e) =>
-                      handleUsernameChange(
-                        (e.target as HTMLInputElement).value,
-                      )
+                      setFullName((e.target as HTMLInputElement).value)
                     }
                   />
-                  {/* Availability indicator */}
-                  {status !== "idle" && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {status === "checking" && (
-                        <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
-                      )}
-                      {status === "available" && (
-                        <Check className="w-4 h-4 text-green-600" />
-                      )}
-                      {status === "taken" && (
-                        <X className="w-4 h-4 text-destructive" />
-                      )}
-                    </div>
+                </Field>
+
+                {/* ── Username Field ─────────────────────────── */}
+                <Field>
+                  <FieldLabel htmlFor="username">Username</FieldLabel>
+                  <div className="w-full relative">
+                    <Input
+                      id="username"
+                      name="username"
+                      placeholder="e.g. acmecorp"
+                      value={username}
+                      onChange={(e) =>
+                        handleUsernameChange(
+                          (e.target as HTMLInputElement).value,
+                        )
+                      }
+                    />
+                    {/* Availability indicator */}
+                    {username.length > 0 && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {isChecking && (
+                          <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                        )}
+                        {!isChecking && isAvailable === true && (
+                          <Check className="w-4 h-4 text-green-600" />
+                        )}
+                        {!isChecking && (isAvailable === false || validationError) && (
+                          <X className="w-4 h-4 text-destructive" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {!isChecking && isAvailable === true && (
+                    <p className="text-xs text-green-600">
+                      Username is available!
+                    </p>
                   )}
+                  {!isChecking && isAvailable === false && (
+                    <p className="text-xs text-destructive">
+                      Username is already taken.
+                    </p>
+                  )}
+                  {!isChecking && validationError && (
+                    <p className="text-xs text-destructive">
+                      {validationError}
+                    </p>
+                  )}
+                </Field>
+
+                {/* ── Profile Link Field ─────────────────────── */}
+                <Field>
+                  <FieldLabel>Profile Link</FieldLabel>
+                  <InputGroup>
+                    <InputGroupAddon>
+                      <InputGroupText className="font-mono text-xs select-none">
+                        snapform.ai/
+                      </InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      value={username}
+                      readOnly
+                      className="font-mono text-xs"
+                      placeholder="username"
+                    />
+                  </InputGroup>
+                  <FieldDescription>
+                    This will be your public URL.
+                  </FieldDescription>
+                </Field>
+
+                <Separator />
+
+                {/* ── Social Links (matching backend schema) ─── */}
+                <div className="space-y-4">
+                  <span className="inline-flex items-center gap-2 font-medium text-base/4.5 text-foreground sm:text-sm/4">
+                    Social Links
+                  </span>
+
+                  {/* X (Twitter) */}
+                  <Field>
+                    <FieldLabel htmlFor="social-x">
+                      <XIcon className="w-3.5 h-3.5" />
+                      X (Twitter)
+                    </FieldLabel>
+                    <Input
+                      id="social-x"
+                      name="x"
+                      placeholder="https://x.com/username"
+                      value={socialLinks.x}
+                      onChange={(e) =>
+                        handleSocialChange(
+                          "x",
+                          (e.target as HTMLInputElement).value,
+                        )
+                      }
+                    />
+                  </Field>
+
+                  {/* LinkedIn */}
+                  <Field>
+                    <FieldLabel htmlFor="social-linkedin">
+                      <LinkedInIcon className="w-3.5 h-3.5" />
+                      LinkedIn
+                    </FieldLabel>
+                    <Input
+                      id="social-linkedin"
+                      name="linkedin"
+                      placeholder="https://linkedin.com/in/username"
+                      value={socialLinks.linkedin}
+                      onChange={(e) =>
+                        handleSocialChange(
+                          "linkedin",
+                          (e.target as HTMLInputElement).value,
+                        )
+                      }
+                    />
+                  </Field>
+
+                  {/* Instagram */}
+                  <Field>
+                    <FieldLabel htmlFor="social-instagram">
+                      <InstagramIcon className="w-3.5 h-3.5" />
+                      Instagram
+                    </FieldLabel>
+                    <Input
+                      id="social-instagram"
+                      name="instagram"
+                      placeholder="https://instagram.com/username"
+                      value={socialLinks.instagram}
+                      onChange={(e) =>
+                        handleSocialChange(
+                          "instagram",
+                          (e.target as HTMLInputElement).value,
+                        )
+                      }
+                    />
+                  </Field>
                 </div>
-                {status === "available" && (
-                  <p className="text-xs text-green-600">
-                    Username is available!
-                  </p>
-                )}
-                {status === "taken" && (
-                  <p className="text-xs text-destructive">
-                    Username is already taken.
-                  </p>
-                )}
-              </Field>
 
-              {/* ── Profile Link Field ─────────────────────── */}
-              <Field>
-                <FieldLabel>Profile Link</FieldLabel>
-                <InputGroup>
-                  <InputGroupAddon>
-                    <InputGroupText className="font-mono text-xs select-none">
-                      snapform.ai/
-                    </InputGroupText>
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    value={username}
-                    readOnly
-                    className="font-mono text-xs"
-                    placeholder="username"
-                  />
-                </InputGroup>
-                <FieldDescription>
-                  This will be your public URL.
-                </FieldDescription>
-              </Field>
-
-              <Separator />
-
-              {/* ── Social Links (matching backend schema) ─── */}
-              <div className="space-y-4">
-                <span className="inline-flex items-center gap-2 font-medium text-base/4.5 text-foreground sm:text-sm/4">
-                  Social Links
-                </span>
-
-                {/* X (Twitter) */}
-                <Field>
-                  <FieldLabel htmlFor="social-x">
-                    <XIcon className="w-3.5 h-3.5" />
-                    X (Twitter)
-                  </FieldLabel>
-                  <Input
-                    id="social-x"
-                    name="x"
-                    placeholder="https://x.com/username"
-                    value={socialLinks.x}
-                    onChange={(e) =>
-                      handleSocialChange(
-                        "x",
-                        (e.target as HTMLInputElement).value,
-                      )
+                {/* ── CTA ────────────────────────────────────── */}
+                <div className="pt-2">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full justify-center gap-2"
+                    disabled={
+                      !username ||
+                      isAvailable !== true ||
+                      isChecking ||
+                      onboardingMutation.isPending
                     }
-                  />
-                </Field>
-
-                {/* LinkedIn */}
-                <Field>
-                  <FieldLabel htmlFor="social-linkedin">
-                    <LinkedInIcon className="w-3.5 h-3.5" />
-                    LinkedIn
-                  </FieldLabel>
-                  <Input
-                    id="social-linkedin"
-                    name="linkedin"
-                    placeholder="https://linkedin.com/in/username"
-                    value={socialLinks.linkedin}
-                    onChange={(e) =>
-                      handleSocialChange(
-                        "linkedin",
-                        (e.target as HTMLInputElement).value,
-                      )
-                    }
-                  />
-                </Field>
-
-                {/* Instagram */}
-                <Field>
-                  <FieldLabel htmlFor="social-instagram">
-                    <InstagramIcon className="w-3.5 h-3.5" />
-                    Instagram
-                  </FieldLabel>
-                  <Input
-                    id="social-instagram"
-                    name="instagram"
-                    placeholder="https://instagram.com/username"
-                    value={socialLinks.instagram}
-                    onChange={(e) =>
-                      handleSocialChange(
-                        "instagram",
-                        (e.target as HTMLInputElement).value,
-                      )
-                    }
-                  />
-                </Field>
-              </div>
-
-              {/* ── CTA ────────────────────────────────────── */}
-              <div className="pt-2">
-                <Button
-                  size="lg"
-                  className="w-full justify-center gap-2"
-                  disabled={!username || status !== "available"}
-                >
-                  Continue to Dashboard
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
+                  >
+                    {onboardingMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving profile...
+                      </>
+                    ) : (
+                      <>
+                        Continue to Dashboard
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
 

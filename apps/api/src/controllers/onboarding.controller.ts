@@ -19,7 +19,8 @@ export const completeOnboarding: RequestHandler = asyncHandler(
       return;
     }
 
-    const { username, socialLinks } = parsed.data;
+    const { username, socialLinks, fullName, name } = parsed.data;
+    const displayName = fullName || name;
 
     // Normalise empty strings to undefined so they aren't stored
     const cleanedLinks = {
@@ -35,6 +36,7 @@ export const completeOnboarding: RequestHandler = asyncHandler(
           username,
           socialLinks: cleanedLinks,
           onboardingCompleted: true,
+          ...(displayName ? { name: displayName } : {}),
         },
         select: {
           id: true,
