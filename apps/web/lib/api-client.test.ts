@@ -132,10 +132,24 @@ describe("apiClient response interceptor", () => {
 });
 
 describe("apiClient 401 auth redirect", () => {
-  type FakeWindow = { location: { pathname: string; href: string } };
+  type FakeWindow = {
+    location: {
+      pathname: string;
+      href: string;
+      replace: (url: string) => void;
+    };
+  };
 
   function mockWindow(pathname: string): FakeWindow {
-    const fake = { location: { pathname, href: "" } };
+    const fake: FakeWindow = {
+      location: {
+        pathname,
+        href: "",
+        replace: (url: string) => {
+          fake.location.href = url;
+        },
+      },
+    };
     (globalThis as unknown as { window: FakeWindow }).window = fake;
     return fake;
   }
@@ -155,14 +169,20 @@ describe("apiClient 401 auth redirect", () => {
     expect(fake.location.href).toBe("/");
   });
 
-  it("does not redirect on public routes", async () => {
-    for (const path of ["/", "/onboarding"]) {
-      const fake = mockWindow(path);
-      await apiClient
-        .get("/private", { adapter: unauthorizedAdapter() })
-        .catch(() => {});
-      expect(fake.location.href).toBe("");
-    }
+  it("hard redirects to / when the session expires on onboarding", async () => {
+    const fake = mockWindow("/onboarding");
+    await apiClient
+      .get("/private", { adapter: unauthorizedAdapter() })
+      .catch(() => {});
+    expect(fake.location.href).toBe("/");
+  });
+
+  it("does not redirect on the auth entry route", async () => {
+    const fake = mockWindow("/");
+    await apiClient
+      .get("/private", { adapter: unauthorizedAdapter() })
+      .catch(() => {});
+    expect(fake.location.href).toBe("");
   });
 
   it("does not redirect when skipAuthRedirect is set", async () => {

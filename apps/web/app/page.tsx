@@ -1,5 +1,10 @@
 import { IndexPage } from "@/components/pages";
+import { AuthenticatedRedirect } from "@/components/auth/authenticated-redirect";
 
 export default function Home() {
-  return <IndexPage />;
+  return (
+    <AuthenticatedRedirect>
+      <IndexPage />
+    </AuthenticatedRedirect>
+  );
 }
