@@ -7,6 +7,7 @@ import responseRouter from "./form/response.routes";
 import publicRouter from "./public/public.routes";
 import oauthRouter from "./user/oauth.routes";
 import onboardingRouter from "./user/onboarding.routes";
+import userRouter from "./user/user.routes";
 import templateRouter from "./template/template.routes";
 import conversationRouter from "./conversation/conversation.routes";
 import { toNodeHandler } from "better-auth/node";
@@ -23,6 +24,9 @@ router.use("/api/v1/auth/manual", userAuthRouter);
 router.use("/api/v1/auth/oauth", oauthRouter);
 router.use("/api/v1/admin/auth", adminAuthRouter);
 router.use("/api/v1/user/onboarding", onboardingRouter);
+router.use("/api/v1/users/onboarding", onboardingRouter);
+router.use("/api/v1/user", userRouter);
+router.use("/api/v1/users", userRouter);
 // NOTE: formRouter MUST be mounted before responseRouter.
 // formRouter handles GET /api/v1/forms/:id/responses/export/csv — if responseRouter
 // is mounted first, Express will intercept that path and return 404.
